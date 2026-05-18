@@ -99,26 +99,11 @@ class GameNotifier extends Notifier<GameState> {
 
   Future<void> startGame(String level) async {
     final aiService = ref.read(aiServiceProvider);
-    final downloader = ref.read(modelDownloaderProvider);
-
-    state = state.copyWith(isDownloading: true, error: null, currentLevel: level);
-
-    await downloader.downloadModel(
-      onProgress: (progress) {
-        state = state.copyWith(downloadProgress: progress);
-      },
-      onCompleted: () async {
-        state = state.copyWith(isDownloading: false, isThinking: true);
-        await _generatePuzzle(level, aiService, downloader);
-      },
-      onError: (err) {
-        state = state.copyWith(isDownloading: false, error: err);
-      },
-    );
+    state = state.copyWith(isThinking: true, error: null, currentLevel: level);
+    await _generatePuzzle(level, aiService);
   }
 
-  Future<void> _generatePuzzle(String level, AiService aiService,
-      ModelDownloader downloader) async {
+  Future<void> _generatePuzzle(String level, AiService aiService) async {
     try {
       const int targetCount = 5;
       final vocabRepo = ref.read(vocabularyRepositoryProvider);

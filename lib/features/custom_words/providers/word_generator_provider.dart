@@ -3,6 +3,7 @@ import '../../../core/providers/settings_provider.dart';
 import '../../../core/services/gemini_service.dart';
 import '../../../core/services/ollama_service.dart';
 import '../../../core/services/vocabulary_repository.dart';
+import '../../game_board/providers/game_provider.dart';
 
 // ─── State ───────────────────────────────────────────────────────────────────
 
@@ -95,11 +96,26 @@ class WordGeneratorNotifier extends Notifier<WordGeneratorState> {
         }
         print('[AI Word Generator] Ollama API çağrısı yapılıyor (${settings.ollamaUrl} - ${settings.ollamaModel})...');
         results = await ollama.generateWords(level, count, excludeWords: existingWords, topic: topic);
+      } else if (settings.backend == AiBackend.localGemma) {
+        final downloader = ref.read(modelDownloaderProvider);
+        if (!await downloader.isModelDownloaded()) {
+          print('[AI Word Generator] Hata: Yerel model indirilmemiş!');
+          state = state.copyWith(
+            status: GenerationStatus.error,
+            error: 'Yerel Gemma modeli henüz indirilmedi.\nLütfen Ayarlar ekranına giderek modeli indirin.',
+          );
+          return;
+        }
+        final aiService = ref.read(aiServiceProvider);
+        final modelPath = await downloader.getModelPath();
+        await aiService.initialize(modelPath);
+        print('[AI Word Generator] Yerel Gemma çağrısı yapılıyor...');
+        results = await aiService.generateWords(level, count, excludeWords: existingWords);
       } else {
         print('[AI Word Generator] Hata: Geçersiz veya desteklenmeyen backend: ${settings.backend}');
         state = state.copyWith(
           status: GenerationStatus.error,
-          error: 'Kelime üretimi için Gemini API veya Ollama seçiniz.\nAyarlar ekranından backend değiştirebilirsiniz.',
+          error: 'Kelime üretimi için geçerli bir motor seçiniz.',
         );
         return;
       }
