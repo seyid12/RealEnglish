@@ -207,7 +207,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       const SizedBox(height: 8),
                     ],
                     const Text(
-                      'Yerel kelime üretmek için 1.4 GB boyutundaki Gemma-2 2B modelini indirmeniz gerekir.',
+                      'Yerel kelime üretmek için 1.4 GB boyutundaki Gemma-4 E2B modelini indirmeniz gerekir.',
                       style: TextStyle(color: _kSubtext, fontSize: 13),
                     ),
                     const SizedBox(height: 16),

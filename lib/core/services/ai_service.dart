@@ -50,6 +50,8 @@ class AiService {
     if (Platform.isWindows) {
       final exeDir = File(Platform.resolvedExecutable).parent.path;
       _libPath = '$exeDir\\llama.dll';
+    } else if (Platform.isAndroid) {
+      _libPath = 'libllama.so';
     }
   }
 
