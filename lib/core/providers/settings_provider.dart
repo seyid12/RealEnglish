@@ -156,6 +156,20 @@ class SettingsNotifier extends Notifier<AppSettings> {
     state = state.copyWith(xp: newXp, level: newLevel);
   }
 
+  /// XP düşer ve otomatik seviye (level) değişimini yönetir
+  Future<void> spendXp(int amount) async {
+    final prefs = await SharedPreferences.getInstance();
+    final newXp = (state.xp - amount).clamp(0, 1000000);
+    
+    // Seviyeyi yeni XP'ye göre dinamik hesapla
+    final newLevel = (newXp / 100).floor() + 1;
+    
+    await prefs.setInt(_keyXp, newXp);
+    await prefs.setInt(_keyLevel, newLevel);
+    
+    state = state.copyWith(xp: newXp, level: newLevel);
+  }
+
   /// Günlük giriş serisini (Streak) günceller
   Future<void> updateStreak() async {
     final prefs = await SharedPreferences.getInstance();

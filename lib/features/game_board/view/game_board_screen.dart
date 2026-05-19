@@ -328,7 +328,26 @@ class _GameBoardScreenState extends ConsumerState<GameBoardScreen> {
                             TextStyle(color: Colors.white38, fontSize: 15)),
               ),
               if (placement != null) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
+                IconButton(
+                  icon: const Icon(Icons.lightbulb, color: Colors.amber, size: 22),
+                  onPressed: () async {
+                    final messenger = ScaffoldMessenger.of(context);
+                    final error = await ref.read(gameProvider.notifier).useRevealLetterHint();
+                    if (error != null) {
+                      messenger.showSnackBar(
+                        SnackBar(
+                          content: Text(error),
+                          backgroundColor: Colors.redAccent,
+                        ),
+                      );
+                    }
+                  },
+                  tooltip: 'Harf İpucu (-20 XP) 💡',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+                const SizedBox(width: 12),
                 IconButton(
                   icon: const Icon(Icons.volume_up, color: Colors.white70, size: 22),
                   onPressed: () {

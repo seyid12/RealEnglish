@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../domain/models.dart';
-import '../domain/prompt_manager.dart';
 import '../domain/crossword_generator.dart';
 import '../../../core/services/vocabulary_repository.dart';
 import '../../../core/services/tts_service.dart';
@@ -185,12 +184,12 @@ class GameNotifier extends Notifier<GameState> {
       newIndex = isAlreadyH ? vEntry.key : hEntry.key;
     }
 
-    // Cursoru ilk boş hücreye getir
+    // Cursoru ilk çözülmemiş/boş hücreye getir (Smart Selection)
     final placement = placements[newIndex];
     int cursor = 0;
     for (int i = 0; i < placement.cells.length; i++) {
       final c = placement.cells[i];
-      if (state.userCharAt(c.x, c.y).isEmpty) {
+      if (!state.isCellCorrect(c.x, c.y)) {
         cursor = i;
         break;
       }
@@ -219,9 +218,21 @@ class GameNotifier extends Notifier<GameState> {
     final newInput = Map<String, String>.from(state.userInput);
     newInput['${cell.x}_${cell.y}'] = letter.toUpperCase();
 
-    // Cursor ilerlet
-    final nextCursor =
-        cursor + 1 < placement.cells.length ? cursor + 1 : cursor;
+    // Cursor ilerlet (Smart Skipping)
+    int nextCursor = cursor + 1;
+    while (nextCursor < placement.cells.length) {
+      final nextCell = placement.cells[nextCursor];
+      if (state.isCellCorrect(nextCell.x, nextCell.y)) {
+        nextCursor++;
+      } else {
+        break;
+      }
+    }
+
+    // Eğer kelimenin sonuna ulaşıldıysa ve hepsi çözülmediyse, cursor'ı son geçerli hücrede tut veya sınırla
+    if (nextCursor >= placement.cells.length) {
+      nextCursor = placement.cells.length - 1;
+    }
 
     state = state.copyWith(userInput: newInput, cursorPosition: nextCursor);
     _checkWordCompletion(idx, newInput);
@@ -248,6 +259,83 @@ class GameNotifier extends Notifier<GameState> {
     }
 
     state = state.copyWith(userInput: newInput, cursorPosition: cursor);
+  }
+
+  /// İpucu kullanarak seçili kelimeden rastgele bir harf açar.
+  /// Maliyet: 20 XP. Başarılıysa null döner, hata varsa hata mesajı döner.
+  Future<String?> useRevealLetterHint() async {
+    final idx = state.selectedPlacementIndex;
+    if (idx == null || idx >= state.placements.length) {
+      return 'Lütfen önce bir kelime seçin.';
+    }
+
+    final placement = state.placements[idx];
+    if (state.correctPlacements.contains(idx)) {
+      return 'Bu kelime zaten çözülmüş.';
+    }
+
+    final settingsNotifier = ref.read(settingsProvider.notifier);
+    final currentXp = ref.read(settingsProvider).xp;
+    const hintCost = 20;
+
+    if (currentXp < hintCost) {
+      return 'Yetersiz XP! Harf ipucu için 20 XP gerekiyor.';
+    }
+
+    // Çözülmemiş hücreleri bul
+    final unsolvedCells = <({int index, int x, int y, String correctChar})>[];
+    for (int i = 0; i < placement.cells.length; i++) {
+      final cell = placement.cells[i];
+      final isCorrect = state.isCellCorrect(cell.x, cell.y);
+      final userChar = state.userCharAt(cell.x, cell.y);
+      final correctChar = placement.word[i];
+
+      if (!isCorrect || userChar != correctChar) {
+        unsolvedCells.add((
+          index: i,
+          x: cell.x,
+          y: cell.y,
+          correctChar: correctChar,
+        ));
+      }
+    }
+
+    if (unsolvedCells.isEmpty) {
+      return 'Tüm harfler zaten doğru.';
+    }
+
+    // Rastgele birini seç
+    unsolvedCells.shuffle();
+    final chosen = unsolvedCells.first;
+
+    // XP düş
+    await settingsNotifier.spendXp(hintCost);
+
+    // Harfi doldur
+    final newInput = Map<String, String>.from(state.userInput);
+    newInput['${chosen.x}_${chosen.y}'] = chosen.correctChar;
+
+    // Cursor'ı sonraki boş/çözülmemiş harfe kaydıralım.
+    int scanCursor = 0;
+    for (int i = 0; i < placement.cells.length; i++) {
+      final c = placement.cells[i];
+      final isCorrect = state.isCellCorrect(c.x, c.y);
+      final charInInput = newInput['${c.x}_${c.y}'];
+      if (!isCorrect && (charInInput == null || charInInput != placement.word[i])) {
+        scanCursor = i;
+        break;
+      }
+      if (i == placement.cells.length - 1) scanCursor = i;
+    }
+
+    state = state.copyWith(
+      userInput: newInput,
+      cursorPosition: scanCursor,
+    );
+
+    // Kelimenin tamamlanıp tamamlanmadığını kontrol et
+    _checkWordCompletion(idx, newInput);
+    return null;
   }
 
   void _checkWordCompletion(int placementIdx, Map<String, String> input) {
@@ -294,35 +382,6 @@ class GameNotifier extends Notifier<GameState> {
         cursorPosition: 0,
       );
     }
-  }
-
-  // ── Mock veri ─────────────────────────────────────────────────────────────
-
-  List<Map<String, dynamic>> _getMockWords(String level) {
-    final data = {
-      'A1': [
-        {'word': 'APPLE', 'clue': 'Kırmızı veya yeşil, tatlı bir meyve'},
-        {'word': 'BOOK', 'clue': 'İçinde sayfalar olan, okuyabileceğin şey'},
-        {'word': 'CAT', 'clue': 'Miyav diyen evcil hayvan'},
-        {'word': 'DOG', 'clue': 'İnsanın en iyi dostu'},
-        {'word': 'EGG', 'clue': 'Tavukların yumurtladığı şey'},
-      ],
-      'A2': [
-        {'word': 'BRIDGE', 'clue': 'İki kıyıyı birbirine bağlayan yapı'},
-        {'word': 'GARDEN', 'clue': 'Çiçek ve sebzelerin yetiştirildiği alan'},
-        {'word': 'RIVER', 'clue': 'Denize doğru akan su yolu'},
-        {'word': 'WINDOW', 'clue': 'Işık geçiren, camdan yapılmış açıklık'},
-        {'word': 'ISLAND', 'clue': 'Her tarafı suyla çevrili arazi'},
-      ],
-      'B1': [
-        {'word': 'JOURNEY', 'clue': 'Uzun bir yolculuk veya seyahat'},
-        {'word': 'FREEDOM', 'clue': 'Kısıtlama olmaksızın hareket edebilme hali'},
-        {'word': 'CULTURE', 'clue': 'Bir toplumun örf, adet ve sanatı'},
-        {'word': 'CLIMATE', 'clue': 'Bir bölgenin uzun süreli hava koşulları'},
-        {'word': 'ANCIENT', 'clue': 'Çok eski zamanlara ait'},
-      ],
-    };
-    return data[level] ?? data['A1']!;
   }
 }
 
