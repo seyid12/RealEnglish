@@ -4,20 +4,46 @@ import '../../features/game_board/domain/prompt_manager.dart';
 
 class OllamaService {
   final Dio _dio;
-  String _baseUrl;
+  String _baseUrl = '';
   String _model;
 
   OllamaService({
     String baseUrl = 'http://localhost:11434',
     String model = 'llama3',
-  })  : _baseUrl = baseUrl,
-        _model = model,
-        _dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 10)));
+  })  : _model = model,
+        _dio = Dio(BaseOptions(connectTimeout: const Duration(seconds: 10))) {
+    _baseUrl = _cleanUrl(baseUrl);
+  }
 
   void configure({required String baseUrl, required String model}) {
-    _baseUrl = baseUrl;
+    _baseUrl = _cleanUrl(baseUrl);
     _model = model;
     _dio.options.baseUrl = '';
+  }
+
+  String _cleanUrl(String url) {
+    var cleaned = url.trim();
+    if (cleaned.isEmpty) return cleaned;
+    
+    // http:// veya https:// şeması yoksa otomatik olarak http:// ekle
+    if (!cleaned.startsWith('http://') && !cleaned.startsWith('https://')) {
+      cleaned = 'http://$cleaned';
+    }
+    
+    if (cleaned.endsWith('/')) {
+      cleaned = cleaned.substring(0, cleaned.length - 1);
+    }
+    
+    try {
+      final uri = Uri.parse(cleaned);
+      var result = '${uri.scheme}://${uri.host}';
+      if (uri.hasPort) {
+        result += ':${uri.port}';
+      }
+      return result;
+    } catch (_) {
+      return cleaned;
+    }
   }
 
   bool get isConfigured => _baseUrl.isNotEmpty && _model.isNotEmpty;

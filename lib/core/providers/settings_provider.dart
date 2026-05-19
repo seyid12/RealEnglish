@@ -116,10 +116,30 @@ class SettingsNotifier extends Notifier<AppSettings> {
 
   Future<void> setOllamaConfig({required String url, required String model}) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyOllamaUrl, url);
+    
+    // URL'yi kaydetmeden önce otomatik temizle
+    var cleanedUrl = url.trim();
+    if (cleanedUrl.isNotEmpty) {
+      if (!cleanedUrl.startsWith('http://') && !cleanedUrl.startsWith('https://')) {
+        cleanedUrl = 'http://$cleanedUrl';
+      }
+      if (cleanedUrl.endsWith('/')) {
+        cleanedUrl = cleanedUrl.substring(0, cleanedUrl.length - 1);
+      }
+      try {
+        final uri = Uri.parse(cleanedUrl);
+        var result = '${uri.scheme}://${uri.host}';
+        if (uri.hasPort) {
+          result += ':${uri.port}';
+        }
+        cleanedUrl = result;
+      } catch (_) {}
+    }
+
+    await prefs.setString(_keyOllamaUrl, cleanedUrl);
     await prefs.setString(_keyOllamaModel, model);
-    state = state.copyWith(ollamaUrl: url, ollamaModel: model);
-    ref.read(ollamaServiceProvider).configure(baseUrl: url, model: model);
+    state = state.copyWith(ollamaUrl: cleanedUrl, ollamaModel: model);
+    ref.read(ollamaServiceProvider).configure(baseUrl: cleanedUrl, model: model);
   }
 
   /// XP ekler ve otomatik seviye (level) atlamasını yönetir
