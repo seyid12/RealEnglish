@@ -1,6 +1,4 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/services/ai_service.dart';
-import '../../../core/services/model_downloader.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../domain/models.dart';
 import '../domain/prompt_manager.dart';
@@ -98,12 +96,11 @@ class GameNotifier extends Notifier<GameState> {
   // ── Oyun başlatma ─────────────────────────────────────────────────────────
 
   Future<void> startGame(String level) async {
-    final aiService = ref.read(aiServiceProvider);
     state = state.copyWith(isThinking: true, error: null, currentLevel: level);
-    await _generatePuzzle(level, aiService);
+    await _generatePuzzle(level);
   }
 
-  Future<void> _generatePuzzle(String level, AiService aiService) async {
+  Future<void> _generatePuzzle(String level) async {
     try {
       const int targetCount = 5;
       final vocabRepo = ref.read(vocabularyRepositoryProvider);
@@ -331,8 +328,6 @@ class GameNotifier extends Notifier<GameState> {
 
 // ─── Providers ──────────────────────────────────────────────────────────────
 
-final aiServiceProvider = Provider((ref) => AiService());
-final modelDownloaderProvider = Provider((ref) => ModelDownloader());
 
 final gameProvider = NotifierProvider<GameNotifier, GameState>(() {
   return GameNotifier();

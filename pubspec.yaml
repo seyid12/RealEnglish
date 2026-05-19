@@ -38,7 +38,6 @@ dependencies:
   riverpod_annotation: any
   freezed_annotation: any
   json_annotation: any
-  llama_cpp_dart: ^0.2.2
   dio: ^5.9.2
   path_provider: ^2.1.5
   google_generative_ai: ^0.4.6

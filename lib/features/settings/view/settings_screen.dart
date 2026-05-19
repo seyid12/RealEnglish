@@ -24,11 +24,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _ollamaModelController = TextEditingController();
   bool _obscureKey = true;
 
-  // Yerel Gemma İndirme Durum Değişkenleri
-  bool _isDownloading = false;
-  double _downloadProgress = 0.0;
-  String? _downloadError;
-  bool _isModelDownloaded = false;
+
 
   @override
   void initState() {
@@ -38,60 +34,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       _apiKeyController.text = settings.geminiApiKey;
       _ollamaUrlController.text = settings.ollamaUrl;
       _ollamaModelController.text = settings.ollamaModel;
-      _checkModelStatus();
     });
   }
 
-  Future<void> _checkModelStatus() async {
-    final downloader = ref.read(modelDownloaderProvider);
-    final isDownloaded = await downloader.isModelDownloaded();
-    if (mounted) {
-      setState(() {
-        _isModelDownloaded = isDownloaded;
-      });
-    }
-  }
-
-  void _startDownload() {
-    setState(() {
-      _isDownloading = true;
-      _downloadError = null;
-      _downloadProgress = 0.0;
-    });
-
-    final downloader = ref.read(modelDownloaderProvider);
-    downloader.downloadModel(
-      onProgress: (progress) {
-        if (mounted) {
-          setState(() {
-            _downloadProgress = progress;
-          });
-        }
-      },
-      onCompleted: () {
-        if (mounted) {
-          setState(() {
-            _isDownloading = false;
-            _isModelDownloaded = true;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('🎉 Yerel Gemma modeli başarıyla indirildi!'),
-              backgroundColor: Color(0xFF2D6A4F),
-            ),
-          );
-        }
-      },
-      onError: (err) {
-        if (mounted) {
-          setState(() {
-            _isDownloading = false;
-            _downloadError = err;
-          });
-        }
-      },
-    );
-  }
 
   @override
   void dispose() {
@@ -147,88 +92,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             onTap: () => notifier.setBackend(AiBackend.ollamaApi),
           ),
 
-          const SizedBox(height: 12),
 
-          _BackendCard(
-            icon: Icons.offline_bolt,
-            title: 'Yerel Gemma (Cihaz İçi AI)',
-            subtitle: 'Tamamen cihazınızda çalışan yapay zeka. 1.4 GB model indirme gerektirir.',
-            isSelected: settings.backend == AiBackend.localGemma,
-            onTap: () => notifier.setBackend(AiBackend.localGemma),
-          ),
-
-          // ─── Yerel Gemma Modeli (1.4 GB) ─────────────────────────────────
-          if (settings.backend == AiBackend.localGemma) ...[
-            const SizedBox(height: 24),
-            _SectionHeader('Yerel Gemma Modeli (1.4 GB)'),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: _kCard,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: _kAccent.withValues(alpha: 0.3)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_isModelDownloaded) ...[
-                    Row(
-                      children: [
-                        const Icon(Icons.check_circle, color: Color(0xFF2D6A4F), size: 24),
-                        const SizedBox(width: 8),
-                        Text('Gemma Modeli Hazır', style: TextStyle(color: _kText, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Yerel Gemma modeli cihazınızda yüklü. İnternetsiz kelime üretimi aktif!',
-                      style: TextStyle(color: _kSubtext, fontSize: 13),
-                    ),
-                  ] else if (_isDownloading) ...[
-                    Text('Model İndiriliyor...', style: TextStyle(color: _kText, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 12),
-                    LinearProgressIndicator(
-                      value: _downloadProgress,
-                      backgroundColor: Colors.white10,
-                      color: _kAccent,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('%${(_downloadProgress * 100).toStringAsFixed(1)}', style: const TextStyle(color: _kSubtext, fontSize: 13)),
-                        const Text('Lütfen uygulamayı kapatmayın', style: TextStyle(color: _kSubtext, fontSize: 11)),
-                      ],
-                    ),
-                  ] else ...[
-                    if (_downloadError != null) ...[
-                      Text('❌ $_downloadError', style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
-                      const SizedBox(height: 8),
-                    ],
-                    const Text(
-                      'Yerel kelime üretmek için 1.4 GB boyutundaki Gemma-4 E2B modelini indirmeniz gerekir.',
-                      style: TextStyle(color: _kSubtext, fontSize: 13),
-                    ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _kAccent,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        icon: const Icon(Icons.download, color: Colors.white),
-                        label: const Text('Gemma Modelini İndir (1.4 GB)', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                        onPressed: _startDownload,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-          ],
 
           // ─── Gemini API Anahtarı ─────────────────────────────────────────
           if (settings.backend == AiBackend.geminiApi) ...[
@@ -357,9 +221,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Icon(
                   settings.backend == AiBackend.geminiApi
                       ? Icons.cloud_done
-                      : settings.backend == AiBackend.ollamaApi
-                          ? Icons.dns
-                          : Icons.offline_bolt,
+                      : Icons.dns,
                   color: _kAccent,
                   size: 28,
                 ),
@@ -371,9 +233,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       Text(
                         settings.backend == AiBackend.geminiApi
                             ? 'Gemini API aktif'
-                            : settings.backend == AiBackend.ollamaApi
-                                ? 'Ollama aktif'
-                                : 'Yerel Gemma aktif',
+                            : 'Ollama aktif',
                         style: const TextStyle(color: _kText, fontWeight: FontWeight.bold),
                       ),
                       Text(
@@ -381,11 +241,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             ? (settings.geminiApiKey.isEmpty
                                 ? '⚠️ API anahtarı girilmedi'
                                 : '✅ Anahtar mevcut')
-                            : settings.backend == AiBackend.ollamaApi
-                                ? '${settings.ollamaUrl} — ${settings.ollamaModel}'
-                                : (_isModelDownloaded
-                                    ? '✅ Model hazır, çevrimdışı üretilebilir'
-                                    : '⚠️ Model indirilmedi, kelime üretilemez'),
+                            : '${settings.ollamaUrl} — ${settings.ollamaModel}',
                         style: const TextStyle(color: _kSubtext, fontSize: 13),
                       ),
                     ],

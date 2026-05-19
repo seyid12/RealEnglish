@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/gemini_service.dart';
 import '../services/ollama_service.dart';
 
-enum AiBackend { localGemma, geminiApi, ollamaApi }
+enum AiBackend { geminiApi, ollamaApi }
 
 class AppSettings {
   final AiBackend backend;
@@ -67,7 +67,13 @@ class SettingsNotifier extends Notifier<AppSettings> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    final backendIndex = prefs.getInt(_keyBackend) ?? 1; // default: geminiApi
+    final backendIndex = prefs.getInt(_keyBackend) ?? 0;
+    
+    // Eski indeksleri koruyarak eşleme yapıyoruz:
+    // Eski localGemma (0) veya geminiApi (1) -> geminiApi (yeni 0)
+    // Eski ollamaApi (2) -> ollamaApi (yeni 1)
+    final backend = (backendIndex == 2) ? AiBackend.ollamaApi : AiBackend.geminiApi;
+
     final apiKey = prefs.getString(_keyApiKey) ?? '';
     final ollamaUrl = prefs.getString(_keyOllamaUrl) ?? 'http://localhost:11434';
     final ollamaModel = prefs.getString(_keyOllamaModel) ?? 'llama3';
@@ -77,7 +83,7 @@ class SettingsNotifier extends Notifier<AppSettings> {
     final lastActive = prefs.getString(_keyLastActive) ?? '';
 
     state = AppSettings(
-      backend: AiBackend.values[backendIndex],
+      backend: backend,
       geminiApiKey: apiKey,
       ollamaUrl: ollamaUrl,
       ollamaModel: ollamaModel,
