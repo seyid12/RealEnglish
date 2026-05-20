@@ -2,14 +2,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/gemini_service.dart';
 import '../services/ollama_service.dart';
+import '../services/gemma_local_service.dart';
 
-enum AiBackend { geminiApi, ollamaApi }
+enum AiBackend { geminiApi, ollamaApi, gemmaLocal }
 
 class AppSettings {
   final AiBackend backend;
   final String geminiApiKey;
   final String ollamaUrl;
   final String ollamaModel;
+  final String gemmaModelPath;
+  final String gemmaBackend; // 'cpu', 'gpu', 'npu'
+  final String gemmaStatus; // 'idle', 'loading', 'ready', 'error'
+  final String? gemmaError;
   final int xp;
   final int level;
   final int streakCount;
@@ -20,6 +25,10 @@ class AppSettings {
     this.geminiApiKey = '',
     this.ollamaUrl = 'http://localhost:11434',
     this.ollamaModel = 'llama3',
+    this.gemmaModelPath = '',
+    this.gemmaBackend = 'gpu',
+    this.gemmaStatus = 'idle',
+    this.gemmaError,
     this.xp = 0,
     this.level = 1,
     this.streakCount = 0,
@@ -31,6 +40,10 @@ class AppSettings {
     String? geminiApiKey,
     String? ollamaUrl,
     String? ollamaModel,
+    String? gemmaModelPath,
+    String? gemmaBackend,
+    String? gemmaStatus,
+    String? Function()? gemmaError,
     int? xp,
     int? level,
     int? streakCount,
@@ -41,6 +54,10 @@ class AppSettings {
       geminiApiKey: geminiApiKey ?? this.geminiApiKey,
       ollamaUrl: ollamaUrl ?? this.ollamaUrl,
       ollamaModel: ollamaModel ?? this.ollamaModel,
+      gemmaModelPath: gemmaModelPath ?? this.gemmaModelPath,
+      gemmaBackend: gemmaBackend ?? this.gemmaBackend,
+      gemmaStatus: gemmaStatus ?? this.gemmaStatus,
+      gemmaError: gemmaError != null ? gemmaError() : this.gemmaError,
       xp: xp ?? this.xp,
       level: level ?? this.level,
       streakCount: streakCount ?? this.streakCount,
@@ -54,6 +71,8 @@ class SettingsNotifier extends Notifier<AppSettings> {
   static const _keyApiKey = 'gemini_api_key';
   static const _keyOllamaUrl = 'ollama_url';
   static const _keyOllamaModel = 'ollama_model';
+  static const _keyGemmaModelPath = 'gemma_model_path';
+  static const _keyGemmaBackend = 'gemma_backend';
   static const _keyXp = 'user_xp';
   static const _keyLevel = 'user_level';
   static const _keyStreak = 'user_streak';
@@ -69,14 +88,24 @@ class SettingsNotifier extends Notifier<AppSettings> {
     final prefs = await SharedPreferences.getInstance();
     final backendIndex = prefs.getInt(_keyBackend) ?? 0;
     
-    // Eski indeksleri koruyarak eşleme yapıyoruz:
-    // Eski localGemma (0) veya geminiApi (1) -> geminiApi (yeni 0)
-    // Eski ollamaApi (2) -> ollamaApi (yeni 1)
-    final backend = (backendIndex == 2) ? AiBackend.ollamaApi : AiBackend.geminiApi;
+    // Eşleme:
+    // 0 -> geminiApi
+    // 1 -> ollamaApi
+    // 2 -> gemmaLocal
+    AiBackend backend;
+    if (backendIndex == 1) {
+      backend = AiBackend.ollamaApi;
+    } else if (backendIndex == 2) {
+      backend = AiBackend.gemmaLocal;
+    } else {
+      backend = AiBackend.geminiApi;
+    }
 
     final apiKey = prefs.getString(_keyApiKey) ?? '';
     final ollamaUrl = prefs.getString(_keyOllamaUrl) ?? 'http://localhost:11434';
     final ollamaModel = prefs.getString(_keyOllamaModel) ?? 'llama3';
+    final gemmaModelPath = prefs.getString(_keyGemmaModelPath) ?? '';
+    final gemmaBackend = prefs.getString(_keyGemmaBackend) ?? 'gpu';
     final xp = prefs.getInt(_keyXp) ?? 0;
     final level = prefs.getInt(_keyLevel) ?? 1;
     final streak = prefs.getInt(_keyStreak) ?? 0;
@@ -87,6 +116,10 @@ class SettingsNotifier extends Notifier<AppSettings> {
       geminiApiKey: apiKey,
       ollamaUrl: ollamaUrl,
       ollamaModel: ollamaModel,
+      gemmaModelPath: gemmaModelPath,
+      gemmaBackend: gemmaBackend,
+      gemmaStatus: 'idle',
+      gemmaError: null,
       xp: xp,
       level: level,
       streakCount: streak,
@@ -99,12 +132,33 @@ class SettingsNotifier extends Notifier<AppSettings> {
     // Servisleri başlat
     if (apiKey.isNotEmpty) ref.read(geminiServiceProvider).configure(apiKey);
     ref.read(ollamaServiceProvider).configure(baseUrl: ollamaUrl, model: ollamaModel);
+    
+    // Eğer Gemma Local seçili ise ve model yolu mevcut ise servisi yapılandırabiliriz
+    if (gemmaModelPath.isNotEmpty) {
+      _initGemma(gemmaModelPath, gemmaBackend);
+    }
+  }
+
+  Future<void> _initGemma(String path, String backend) async {
+    state = state.copyWith(gemmaStatus: 'loading', gemmaError: () => null);
+    try {
+      await ref.read(gemmaLocalServiceProvider).configure(
+        modelPath: path,
+        backendType: backend,
+      );
+      state = state.copyWith(gemmaStatus: 'ready');
+    } catch (e) {
+      state = state.copyWith(gemmaStatus: 'error', gemmaError: () => e.toString());
+    }
   }
 
   Future<void> setBackend(AiBackend backend) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_keyBackend, backend.index);
     state = state.copyWith(backend: backend);
+    if (backend == AiBackend.gemmaLocal && state.gemmaModelPath.isNotEmpty && state.gemmaStatus != 'ready') {
+      _initGemma(state.gemmaModelPath, state.gemmaBackend);
+    }
   }
 
   Future<void> setGeminiApiKey(String key) async {
@@ -112,6 +166,26 @@ class SettingsNotifier extends Notifier<AppSettings> {
     await prefs.setString(_keyApiKey, key);
     state = state.copyWith(geminiApiKey: key);
     ref.read(geminiServiceProvider).configure(key);
+  }
+
+  Future<void> setGemmaModelPath(String path) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyGemmaModelPath, path);
+    state = state.copyWith(gemmaModelPath: path);
+    if (path.isNotEmpty) {
+      await _initGemma(path, state.gemmaBackend);
+    } else {
+      state = state.copyWith(gemmaStatus: 'idle', gemmaError: () => null);
+    }
+  }
+
+  Future<void> setGemmaBackend(String backendType) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyGemmaBackend, backendType);
+    state = state.copyWith(gemmaBackend: backendType);
+    if (state.gemmaModelPath.isNotEmpty) {
+      await _initGemma(state.gemmaModelPath, backendType);
+    }
   }
 
   Future<void> setOllamaConfig({required String url, required String model}) async {
@@ -212,5 +286,9 @@ final geminiServiceProvider = Provider((ref) {
 
 final ollamaServiceProvider = Provider((ref) {
   return OllamaService();
+});
+
+final gemmaLocalServiceProvider = Provider((ref) {
+  return GemmaLocalService();
 });
 

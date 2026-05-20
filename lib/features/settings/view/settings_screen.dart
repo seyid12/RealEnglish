@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/services/vocabulary_repository.dart';
 import '../../custom_words/view/custom_words_screen.dart';
-import '../../game_board/providers/game_provider.dart';
 
 const _kBg = Color(0xFF1A1A2E);
 const _kCard = Color(0xFF12122A);
@@ -22,6 +22,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _apiKeyController = TextEditingController();
   final _ollamaUrlController = TextEditingController();
   final _ollamaModelController = TextEditingController();
+  final _gemmaModelPathController = TextEditingController();
   bool _obscureKey = true;
 
 
@@ -34,6 +35,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       _apiKeyController.text = settings.geminiApiKey;
       _ollamaUrlController.text = settings.ollamaUrl;
       _ollamaModelController.text = settings.ollamaModel;
+      _gemmaModelPathController.text = settings.gemmaModelPath;
     });
   }
 
@@ -43,6 +45,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _apiKeyController.dispose();
     _ollamaUrlController.dispose();
     _ollamaModelController.dispose();
+    _gemmaModelPathController.dispose();
     super.dispose();
   }
 
@@ -90,6 +93,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             subtitle: 'Yerel ağınızdaki Ollama sunucusuna bağlanır. İnternet gerektirmez.',
             isSelected: settings.backend == AiBackend.ollamaApi,
             onTap: () => notifier.setBackend(AiBackend.ollamaApi),
+          ),
+
+          const SizedBox(height: 12),
+
+          _BackendCard(
+             icon: Icons.offline_bolt,
+             title: 'Gemma 4 Yerel (LiteRT-LM)',
+             subtitle: 'Tamamen yerel dil modeli. İnternet bağlantısı veya harici sunucu gerektirmez.',
+             isSelected: settings.backend == AiBackend.gemmaLocal,
+             onTap: () => notifier.setBackend(AiBackend.gemmaLocal),
           ),
 
 
@@ -205,6 +218,80 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ],
 
+          // ─── Gemma Yerel Model Ayarları ──────────────────────────────────
+          if (settings.backend == AiBackend.gemmaLocal) ...[
+            const SizedBox(height: 24),
+            _SectionHeader('Gemma Yerel Model Ayarları'),
+            const SizedBox(height: 8),
+            const Text(
+              'Gemma 4 modelinin cihazınızda tamamen internetsiz çalışması için ".litertlm" dosya yolunu belirtin.',
+              style: TextStyle(color: _kSubtext, fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            _InputField(
+              label: 'Model Dosya Yolu (.litertlm)',
+              controller: _gemmaModelPathController,
+              hint: '/storage/emulated/0/Download/gemma-4-E2B-it.litertlm',
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.folder_open, color: _kAccent),
+                onPressed: () async {
+                  final result = await FilePicker.pickFiles(
+                    dialogTitle: 'Gemma 4 (.litertlm) Modelini Seçin',
+                    type: FileType.any,
+                  );
+                  if (result != null && result.files.single.path != null) {
+                    setState(() {
+                      _gemmaModelPathController.text = result.files.single.path!;
+                    });
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            
+            // Donanım Hızlandırıcı Seçimi
+            const Text('Donanım Hızlandırıcı', style: TextStyle(color: _kSubtext, fontSize: 13)),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                _buildHardwareOption(context, ref, 'CPU', 'cpu', settings.gemmaBackend),
+                const SizedBox(width: 8),
+                _buildHardwareOption(context, ref, 'GPU (Önerilen)', 'gpu', settings.gemmaBackend),
+                const SizedBox(width: 8),
+                _buildHardwareOption(context, ref, 'NPU', 'npu', settings.gemmaBackend),
+              ],
+            ),
+            const SizedBox(height: 16),
+            
+            // Model Durum Göstergesi
+            _buildGemmaStatusCard(settings),
+            const SizedBox(height: 16),
+            
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _kAccent,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                icon: const Icon(Icons.refresh, color: Colors.white),
+                label: const Text('Modeli Kaydet ve Başlat', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                onPressed: () async {
+                  await notifier.setGemmaModelPath(_gemmaModelPathController.text.trim());
+                  if (context.mounted && settings.gemmaError == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('✅ Model yolu kaydedildi ve başlatılıyor...'),
+                        backgroundColor: Color(0xFF2D6A4F),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ),
+          ],
+
           const SizedBox(height: 32),
 
           // ─── Mevcut Durum ────────────────────────────────────────────────
@@ -221,7 +308,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 Icon(
                   settings.backend == AiBackend.geminiApi
                       ? Icons.cloud_done
-                      : Icons.dns,
+                      : (settings.backend == AiBackend.ollamaApi
+                          ? Icons.dns
+                          : Icons.offline_bolt),
                   color: _kAccent,
                   size: 28,
                 ),
@@ -233,7 +322,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       Text(
                         settings.backend == AiBackend.geminiApi
                             ? 'Gemini API aktif'
-                            : 'Ollama aktif',
+                            : (settings.backend == AiBackend.ollamaApi
+                                ? 'Ollama aktif'
+                                : 'Gemma Local aktif'),
                         style: const TextStyle(color: _kText, fontWeight: FontWeight.bold),
                       ),
                       Text(
@@ -241,7 +332,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             ? (settings.geminiApiKey.isEmpty
                                 ? '⚠️ API anahtarı girilmedi'
                                 : '✅ Anahtar mevcut')
-                            : '${settings.ollamaUrl} — ${settings.ollamaModel}',
+                            : (settings.backend == AiBackend.ollamaApi
+                                ? '${settings.ollamaUrl} — ${settings.ollamaModel}'
+                                : (settings.gemmaStatus == 'ready'
+                                    ? '✅ Model kullanıma hazır (Hızlandırıcı: ${settings.gemmaBackend.toUpperCase()})'
+                                    : '⚠️ Model hazır değil (Durum: ${settings.gemmaStatus.toUpperCase()})')),
                         style: const TextStyle(color: _kSubtext, fontSize: 13),
                       ),
                     ],
@@ -360,6 +455,112 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     );
   }
+
+  Widget _buildHardwareOption(BuildContext context, WidgetRef ref, String label, String value, String currentValue) {
+    final isSelected = currentValue == value;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => ref.read(settingsProvider.notifier).setGemmaBackend(value),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: isSelected ? _kAccent.withValues(alpha: 0.2) : _kCard,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isSelected ? _kAccent : Colors.white12,
+              width: isSelected ? 2 : 1,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? _kText : _kSubtext,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGemmaStatusCard(AppSettings settings) {
+    Color statusColor = Colors.grey;
+    IconData statusIcon = Icons.help_outline;
+    String statusText = 'Durum Bilinmiyor';
+    String subText = '';
+
+    switch (settings.gemmaStatus) {
+      case 'loading':
+        statusColor = Colors.amber;
+        statusIcon = Icons.hourglass_empty;
+        statusText = 'Model Yükleniyor...';
+        subText = 'Büyük model dosyası belleğe alınıyor. Lütfen bekleyin.';
+        break;
+      case 'ready':
+        statusColor = const Color(0xFF2D6A4F);
+        statusIcon = Icons.check_circle_outline;
+        statusText = 'Model Hazır ✅';
+        subText = 'Cihazınızda çevrimdışı çalışmaya hazır.';
+        break;
+      case 'error':
+        statusColor = Colors.redAccent;
+        statusIcon = Icons.error_outline;
+        statusText = 'Yükleme Hatası ❌';
+        subText = settings.gemmaError ?? 'Bilinmeyen bir hata oluştu.';
+        break;
+      case 'idle':
+      default:
+        statusColor = _kSubtext;
+        statusIcon = Icons.info_outline;
+        statusText = 'Model Yüklenmedi ⚠️';
+        subText = 'Lütfen geçerli bir dosya yolu girip başlatın.';
+        break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: statusColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (settings.gemmaStatus == 'loading')
+            const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.amber),
+            )
+          else
+            Icon(statusIcon, color: statusColor, size: 24),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  statusText,
+                  style: TextStyle(color: _kText, fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                if (subText.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    subText,
+                    style: const TextStyle(color: _kSubtext, fontSize: 12),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _SectionHeader extends StatelessWidget {
@@ -450,11 +651,13 @@ class _InputField extends StatelessWidget {
   final String label;
   final TextEditingController controller;
   final String hint;
+  final Widget? suffixIcon;
 
   const _InputField({
     required this.label,
     required this.controller,
     required this.hint,
+    this.suffixIcon,
   });
 
   @override
@@ -478,6 +681,7 @@ class _InputField extends StatelessWidget {
               hintStyle: const TextStyle(color: _kSubtext),
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               border: InputBorder.none,
+              suffixIcon: suffixIcon,
             ),
           ),
         ),

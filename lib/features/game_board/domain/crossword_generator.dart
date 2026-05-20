@@ -200,7 +200,9 @@ class CrosswordGenerator {
   }
 
   static void _placeH(List<List<String?>> g, String w, int x, int y) {
-    for (int i = 0; i < w.length; i++) g[y][x + i] = w[i];
+    for (int i = 0; i < w.length; i++) {
+      g[y][x + i] = w[i];
+    }
   }
 
   static bool _canPlaceV(List<List<String?>> g, String w, int x, int y, int gs) {
@@ -219,7 +221,9 @@ class CrosswordGenerator {
   }
 
   static void _placeV(List<List<String?>> g, String w, int x, int y) {
-    for (int i = 0; i < w.length; i++) g[y + i][x] = w[i];
+    for (int i = 0; i < w.length; i++) {
+      g[y + i][x] = w[i];
+    }
   }
 
   // Emniyet Kemeri (Fallback Yöntemi): Hızlı ve basit yerleşim

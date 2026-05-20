@@ -116,7 +116,7 @@ class _GameBoardScreenState extends ConsumerState<GameBoardScreen> {
                 decoration: BoxDecoration(
                   color: const Color(0xFF12122A),
                   shape: BoxShape.circle,
-                  border: Border.all(color: _kAccent.withOpacity(0.3), width: 2),
+                  border: Border.all(color: _kAccent.withValues(alpha: 0.3), width: 2),
                 ),
                 child: const Icon(Icons.book_outlined, color: _kAccent, size: 64),
               ),
@@ -418,7 +418,7 @@ class _CellWidget extends StatelessWidget {
       borderColor = Colors.white;
     } else if (isInSelectedWord) {
       bgColor = _kCellSelected;
-      borderColor = _kAccent.withOpacity(0.6);
+      borderColor = _kAccent.withValues(alpha: 0.6);
     } else {
       bgColor = _kCellNormal;
       borderColor = Colors.white12;
@@ -534,7 +534,7 @@ class _KeyButton extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(6),
           onTap: onPressed,
-          splashColor: _kKeyPressed.withOpacity(0.4),
+          splashColor: _kKeyPressed.withValues(alpha: 0.4),
           child: Container(
             width: width,
             height: 42,

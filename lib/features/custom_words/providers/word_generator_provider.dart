@@ -1,7 +1,6 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/settings_provider.dart';
-import '../../../core/services/gemini_service.dart';
-import '../../../core/services/ollama_service.dart';
 import '../../../core/services/vocabulary_repository.dart';
 
 // ─── State ───────────────────────────────────────────────────────────────────
@@ -50,7 +49,7 @@ class WordGeneratorNotifier extends Notifier<WordGeneratorState> {
     required int count,
     String? topic,
   }) async {
-    print('[AI Word Generator] Başlatıldı. Seviye: $level, Sayı: $count, Konu: $topic');
+    debugPrint('[AI Word Generator] Başlatıldı. Seviye: $level, Sayı: $count, Konu: $topic');
     state = WordGeneratorState(
       status: GenerationStatus.loading,
       requestedCount: count,
@@ -61,47 +60,59 @@ class WordGeneratorNotifier extends Notifier<WordGeneratorState> {
       final settings = ref.read(settingsProvider);
       final vocabRepo = ref.read(vocabularyRepositoryProvider);
 
-      print('[AI Word Generator] Seçili Backend: ${settings.backend}');
+      debugPrint('[AI Word Generator] Seçili Backend: ${settings.backend}');
 
       // Zaten havuzda olan kelimeleri al → AI'ya tekrar ürettirme
       final existingWords = vocabRepo.getCustomWords(level)
           .map((w) => w['word'].toString())
           .toSet();
-      print('[AI Word Generator] Havuzdaki mevcut kelimeler (hariç tutulacak): $existingWords');
+      debugPrint('[AI Word Generator] Havuzdaki mevcut kelimeler (hariç tutulacak): $existingWords');
 
       List<Map<String, dynamic>> results = [];
 
       if (settings.backend == AiBackend.geminiApi) {
         final gemini = ref.read(geminiServiceProvider);
         if (!gemini.isConfigured) {
-          print('[AI Word Generator] Hata: Gemini API anahtarı yapılandırılmamış!');
+          debugPrint('[AI Word Generator] Hata: Gemini API anahtarı yapılandırılmamış!');
           state = state.copyWith(
             status: GenerationStatus.error,
             error: 'Gemini API anahtarı girilmedi.\nAyarlar > Gemini API Anahtarı alanını doldurun.',
           );
           return;
         }
-        print('[AI Word Generator] Gemini API çağrısı yapılıyor...');
+        debugPrint('[AI Word Generator] Gemini API çağrısı yapılıyor...');
         results = await gemini.generateWords(level, count, excludeWords: existingWords, topic: topic);
       } else if (settings.backend == AiBackend.ollamaApi) {
         final ollama = ref.read(ollamaServiceProvider);
         if (!ollama.isConfigured) {
-          print('[AI Word Generator] Hata: Ollama yapılandırılmamış!');
+          debugPrint('[AI Word Generator] Hata: Ollama yapılandırılmamış!');
           state = state.copyWith(
             status: GenerationStatus.error,
             error: 'Ollama ayarlanmadı.\nAyarlar > Ollama adresini kontrol edin.',
           );
           return;
         }
-        print('[AI Word Generator] Ollama API çağrısı yapılıyor (${settings.ollamaUrl} - ${settings.ollamaModel})...');
+        debugPrint('[AI Word Generator] Ollama API çağrısı yapılıyor (${settings.ollamaUrl} - ${settings.ollamaModel})...');
         results = await ollama.generateWords(level, count, excludeWords: existingWords, topic: topic);
+      } else if (settings.backend == AiBackend.gemmaLocal) {
+        final gemma = ref.read(gemmaLocalServiceProvider);
+        if (!gemma.isConfigured) {
+          debugPrint('[AI Word Generator] Hata: Gemma Local modeli yüklenmemiş veya hazır değil!');
+          state = state.copyWith(
+            status: GenerationStatus.error,
+            error: 'Gemma Local modeli yüklenmemiş veya hazır değil.\nAyarlar > Gemma Yerel Model Ayarları alanından modelinizi yükleyin.',
+          );
+          return;
+        }
+        debugPrint('[AI Word Generator] Gemma Local modeli çağrısı yapılıyor...');
+        results = await gemma.generateWords(level, count, excludeWords: existingWords, topic: topic);
       }
 
-      print('[AI Word Generator] Yapay zekadan gelen ham kelime sayısı: ${results.length}');
-      print('[AI Word Generator] Yapay zekadan gelen sonuçlar: $results');
+      debugPrint('[AI Word Generator] Yapay zekadan gelen ham kelime sayısı: ${results.length}');
+      debugPrint('[AI Word Generator] Yapay zekadan gelen sonuçlar: $results');
 
       if (results.isEmpty) {
-        print('[AI Word Generator] Hata: AI boş sonuç döndü veya JSON parse edilemedi!');
+        debugPrint('[AI Word Generator] Hata: AI boş sonuç döndü veya JSON parse edilemedi!');
         state = state.copyWith(
           status: GenerationStatus.error,
           error: 'Yapay zeka kelime üretemedi. Lütfen tekrar deneyin.',
@@ -115,26 +126,26 @@ class WordGeneratorNotifier extends Notifier<WordGeneratorState> {
         final word = (item['word'] as String?)?.trim().toUpperCase() ?? '';
         final clue = (item['clue'] as String?)?.trim() ?? '';
         if (word.isEmpty || clue.isEmpty) {
-          print('[AI Word Generator] Geçersiz kelime veya ipucu atlandı: word="$word", clue="$clue"');
+          debugPrint('[AI Word Generator] Geçersiz kelime veya ipucu atlandı: word="$word", clue="$clue"');
           continue;
         }
         // Sadece İngilizce harfler ve boşluklara izin verelim
         if (!RegExp(r'^[A-Z\s]+$').hasMatch(word)) {
-          print('[AI Word Generator] Regex uyuşmazlığı nedeniyle kelime atlandı (sadece A-Z ve boşluk olmalı): "$word"');
+          debugPrint('[AI Word Generator] Regex uyuşmazlığı nedeniyle kelime atlandı (sadece A-Z ve boşluk olmalı): "$word"');
           continue;
         }
         await vocabRepo.addCustomWord(word, clue, level);
-        print('[AI Word Generator] Kelime eklendi: "$word" -> "$clue"');
+        debugPrint('[AI Word Generator] Kelime eklendi: "$word" -> "$clue"');
         saved++;
       }
 
-      print('[AI Word Generator] Başarıyla kaydedilen kelime sayısı: $saved');
+      debugPrint('[AI Word Generator] Başarıyla kaydedilen kelime sayısı: $saved');
       state = state.copyWith(
         status: GenerationStatus.success,
         generatedCount: saved,
       );
     } catch (e) {
-      print('[AI Word Generator] Beklenmeyen Hata: $e');
+      debugPrint('[AI Word Generator] Beklenmeyen Hata: $e');
       state = state.copyWith(
         status: GenerationStatus.error,
         error: 'Hata oluştu: $e',
