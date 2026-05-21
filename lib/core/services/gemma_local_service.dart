@@ -1,10 +1,10 @@
 import 'dart:convert';
-import 'package:flutter_litert_lm/flutter_litert_lm.dart';
+import 'package:flutter_gemma/core/api/flutter_gemma.dart';
 import '../../features/game_board/domain/prompt_manager.dart';
 
 class GemmaLocalService {
-  LiteLmEngine? _engine;
-  LiteLmConversation? _conversation;
+  InferenceModel? _model;
+  Chat? _conversation;
   bool _isLoading = false;
   String? _lastError;
   String _currentModelPath = '';
@@ -12,7 +12,7 @@ class GemmaLocalService {
 
   bool get isLoading => _isLoading;
   String? get lastError => _lastError;
-  bool get isConfigured => _engine != null && _conversation != null;
+  bool get isConfigured => _model != null && _conversation != null;
   String get currentModelPath => _currentModelPath;
   String get currentBackendType => _currentBackendType;
 
@@ -25,8 +25,7 @@ class GemmaLocalService {
       return;
     }
 
-    // Eğer model zaten yüklenmişse ve parametreler değişmemişse tekrar yükleme
-    if (_engine != null &&
+    if (_model != null &&
         _currentModelPath == modelPath &&
         _currentBackendType == backendType) {
       return;
@@ -41,42 +40,46 @@ class GemmaLocalService {
       _currentModelPath = modelPath;
       _currentBackendType = backendType;
 
-      LiteLmBackend backend;
+      PreferredBackend backend;
       switch (backendType.toLowerCase()) {
         case 'cpu':
-          backend = LiteLmBackend.cpu;
+          backend = PreferredBackend.cpu;
           break;
         case 'npu':
-          backend = LiteLmBackend.npu;
+          // flutter_gemma NPU'yu da destekliyorsa; yoksa GPU fallback yapılır
+          backend = PreferredBackend.cpu; 
           break;
         case 'gpu':
         default:
-          backend = LiteLmBackend.gpu;
+          backend = PreferredBackend.gpu;
           break;
       }
 
-      _engine = await LiteLmEngine.create(
-        LiteLmEngineConfig(
-          modelPath: modelPath,
-          backend: backend,
-        ),
+      // Modeli yükle/install et
+      await FlutterGemma.installModel(modelType: ModelType.gemmaIt)
+          .fromFile(modelPath)
+          .install();
+
+      // Aktif modeli al
+      _model = await FlutterGemma.getActiveModel(
+        maxTokens: 2048,
+        preferredBackend: backend,
       );
 
+      // Chat oturumu oluştur
+      _conversation = await _model!.createChat();
+      
+      // Sistem promptunu en başa ekleyelim
       final systemPrompt = PromptManager.getSystemPrompt();
-      _conversation = await _engine!.createConversation(
-        LiteLmConversationConfig(
-          systemInstruction: systemPrompt,
-          samplerConfig: const LiteLmSamplerConfig(
-            temperature: 0.7,
-          ),
-        ),
-      );
+      await _conversation!.addQueryChunk(Message.text(text: systemPrompt, isUser: true));
+      // Aslında sistem rolü de destekleniyorsa Message.system() kullanılabilir ama garanti olması için isUser: true yaptık,
+      // veya generateChatResponse() çağırarak modeli hazırlayabiliriz.
 
       _isLoading = false;
     } catch (e) {
       _lastError = 'Model yüklenirken hata oluştu: $e';
       _isLoading = false;
-      _engine = null;
+      _model = null;
       _conversation = null;
     }
   }
@@ -99,10 +102,11 @@ class GemmaLocalService {
     );
 
     try {
-      final response = await _conversation!.sendMessage(userPrompt);
-      return _parseJson(response.text);
+      await _conversation!.addQueryChunk(Message.text(text: userPrompt, isUser: true));
+      final response = await _conversation!.generateChatResponse();
+      
+      return _parseJson(response ?? '');
     } catch (e) {
-      // ignore: avoid_print
       print('Gemma Local kelime üretme hatası: $e');
       rethrow;
     }
@@ -124,7 +128,6 @@ class GemmaLocalService {
       }
       return [];
     } catch (e) {
-      // ignore: avoid_print
       print('Gemma Local JSON parse hatası: $e');
       return [];
     }
@@ -132,11 +135,8 @@ class GemmaLocalService {
 
   Future<void> dispose() async {
     try {
-      // flutter_litert_lm dispose metodlarını çağırıyoruz (varsa)
-      // Paket dokümantasyonuna göre engine veya conversation kapatma metotlarını çalıştır
-      // Eğer yoksa garbage collector halledecektir fakat bellek sızıntısını önlemek için nesneleri sıfırlıyoruz.
       _conversation = null;
-      _engine = null;
+      _model = null;
     } catch (_) {}
   }
 }
