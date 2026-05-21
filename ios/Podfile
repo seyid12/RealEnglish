@@ -1,0 +1,63 @@
+# Uncomment this line to define a global platform for your project
+platform :ios, '15.0'
+
+# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+project 'Runner', {
+  'Debug' => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
+
+def flutter_root
+  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
+  unless File.exist?(generated_xcode_build_settings_path)
+    raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get is executed first"
+  end
+
+  File.foreach(generated_xcode_build_settings_path) do |line|
+    matches = line.match(/FLUTTER_ROOT\=(.*)/)
+    return matches[1].strip if matches
+  end
+  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
+end
+
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
+
+flutter_ios_podfile_setup
+
+target 'Runner' do
+  use_frameworks!
+  use_modular_headers!
+
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  
+  target 'RunnerTests' do
+    inherit! :search_paths
+  end
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+  end
+
+  # --- FIX FOR LITERT-LM 26.2 BUG ---
+  # Iterate over all pods to find flutter_litert_lm
+  installer.pods_project.targets.each do |target|
+    if target.name == 'flutter_litert_lm'
+      puts "Applying fix for GemmaModelConstraintProvider MinimumOSVersion bug..."
+      gemma_plist = File.join(installer.sandbox.root, "flutter_litert_lm/Frameworks/GemmaModelConstraintProvider.xcframework/ios-arm64/GemmaModelConstraintProvider.framework/Info.plist")
+      gemma_plist_sim = File.join(installer.sandbox.root, "flutter_litert_lm/Frameworks/GemmaModelConstraintProvider.xcframework/ios-arm64_x86_64-simulator/GemmaModelConstraintProvider.framework/Info.plist")
+      
+      # Use PlistBuddy to set the MinimumOSVersion directly inside the vendored framework
+      if File.exist?(gemma_plist)
+        system("/usr/libexec/PlistBuddy -c \"Set :MinimumOSVersion 15.0\" \"#{gemma_plist}\"")
+      end
+      if File.exist?(gemma_plist_sim)
+        system("/usr/libexec/PlistBuddy -c \"Set :MinimumOSVersion 15.0\" \"#{gemma_plist_sim}\"")
+      end
+    end
+  end
+end
