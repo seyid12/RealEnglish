@@ -66,5 +66,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Kendi oluşturduğunuz İngilizce kelime listelerini ve model dosyalarını içe aktarabilmeniz için dosya galerinize erişim gereklidir.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Kullanıcı profili ve oyun içi eklentiler için kamera erişimi gereklidir.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Size en uygun oyun içi içerikleri ve analizleri sunabilmek için konum bilgisi gereklidir.</string>
 </dict>
 </plist>
