@@ -250,12 +250,21 @@ class GameNotifier extends Notifier<GameState> {
     final currentCell = placement.cells[cursor];
     final currentKey = '${currentCell.x}_${currentCell.y}';
 
-    if (newInput.containsKey(currentKey)) {
+    // Sadece henüz doğru olarak kilitlenmemiş hücreleri silebiliriz
+    if (newInput.containsKey(currentKey) && !state.isCellCorrect(currentCell.x, currentCell.y)) {
       newInput.remove(currentKey);
     } else if (cursor > 0) {
-      cursor--;
-      final prevCell = placement.cells[cursor];
-      newInput.remove('${prevCell.x}_${prevCell.y}');
+      // Geriye doğru giderken doğru/kilitli hücreleri atla (Smart Skipping)
+      int nextCursor = cursor - 1;
+      while (nextCursor >= 0 && state.isCellCorrect(placement.cells[nextCursor].x, placement.cells[nextCursor].y)) {
+        nextCursor--;
+      }
+      
+      if (nextCursor >= 0) {
+        cursor = nextCursor;
+        final prevCell = placement.cells[cursor];
+        newInput.remove('${prevCell.x}_${prevCell.y}');
+      }
     }
 
     state = state.copyWith(userInput: newInput, cursorPosition: cursor);
