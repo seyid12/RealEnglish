@@ -44,20 +44,15 @@ post_install do |installer|
   end
 
   # --- FIX FOR LITERT-LM 26.2 BUG ---
-  # Iterate over all pods to find flutter_litert_lm
-  installer.pods_project.targets.each do |target|
-    if target.name == 'flutter_litert_lm'
-      puts "Applying fix for GemmaModelConstraintProvider MinimumOSVersion bug..."
-      gemma_plist = File.join(installer.sandbox.root, "flutter_litert_lm/Frameworks/GemmaModelConstraintProvider.xcframework/ios-arm64/GemmaModelConstraintProvider.framework/Info.plist")
-      gemma_plist_sim = File.join(installer.sandbox.root, "flutter_litert_lm/Frameworks/GemmaModelConstraintProvider.xcframework/ios-arm64_x86_64-simulator/GemmaModelConstraintProvider.framework/Info.plist")
-      
-      # Use PlistBuddy to set the MinimumOSVersion directly inside the vendored framework
-      if File.exist?(gemma_plist)
-        system("/usr/libexec/PlistBuddy -c \"Set :MinimumOSVersion 15.0\" \"#{gemma_plist}\"")
-      end
-      if File.exist?(gemma_plist_sim)
-        system("/usr/libexec/PlistBuddy -c \"Set :MinimumOSVersion 15.0\" \"#{gemma_plist_sim}\"")
-      end
+  puts "Applying robust recursive fix for GemmaModelConstraintProvider MinimumOSVersion bug..."
+  podfile_dir = File.dirname(__FILE__)
+  Dir.glob("#{podfile_dir}/**/GemmaModelConstraintProvider.framework/Info.plist").each do |plist_path|
+    puts "Found Gemma plist: #{plist_path}"
+    if File.exist?(plist_path)
+      # Set MinimumOSVersion to 15.0 using PlistBuddy
+      system("/usr/libexec/PlistBuddy -c \"Set :MinimumOSVersion 15.0\" \"#{plist_path}\"")
+      # Verify the change
+      system("/usr/libexec/PlistBuddy -c \"Print :MinimumOSVersion\" \"#{plist_path}\"")
     end
   end
 end
