@@ -1,10 +1,10 @@
 import 'dart:convert';
-import 'package:flutter_gemma/core/api/flutter_gemma.dart';
+import 'package:flutter_gemma/flutter_gemma.dart';
 import '../../features/game_board/domain/prompt_manager.dart';
 
 class GemmaLocalService {
   InferenceModel? _model;
-  Chat? _conversation;
+  InferenceChat? _conversation;
   bool _isLoading = false;
   String? _lastError;
   String _currentModelPath = '';
@@ -104,8 +104,11 @@ class GemmaLocalService {
     try {
       await _conversation!.addQueryChunk(Message.text(text: userPrompt, isUser: true));
       final response = await _conversation!.generateChatResponse();
-      
-      return _parseJson(response ?? '');
+      String responseText = '';
+      if (response is TextResponse) {
+        responseText = response.token;
+      }
+      return _parseJson(responseText);
     } catch (e) {
       print('Gemma Local kelime üretme hatası: $e');
       rethrow;
