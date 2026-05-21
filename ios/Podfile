@@ -44,11 +44,14 @@ post_install do |installer|
   end
 
   # --- FIX FOR LITERT-LM 26.2 BUG ---
-  puts "Applying robust recursive fix for GemmaModelConstraintProvider MinimumOSVersion bug..."
+  puts "Applying robust shell-based recursive fix for GemmaModelConstraintProvider MinimumOSVersion bug..."
   podfile_dir = File.dirname(__FILE__)
-  Dir.glob("#{podfile_dir}/**/GemmaModelConstraintProvider.framework/Info.plist").each do |plist_path|
-    puts "Found Gemma plist: #{plist_path}"
-    if File.exist?(plist_path)
+  
+  # Use find -L to follow symlinks and find all Gemma Info.plist files under the ios/ directory (including resolved pub-cache)
+  plist_paths = `find -L "#{podfile_dir}" -name "Info.plist" 2>/dev/null`.split("\n")
+  plist_paths.each do |plist_path|
+    if plist_path.include?("GemmaModelConstraintProvider.framework") && File.exist?(plist_path)
+      puts "Found Gemma plist (via find): #{plist_path}"
       # Set MinimumOSVersion to 15.0 using PlistBuddy
       system("/usr/libexec/PlistBuddy -c \"Set :MinimumOSVersion 15.0\" \"#{plist_path}\"")
       # Verify the change
