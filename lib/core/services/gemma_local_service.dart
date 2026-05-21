@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_gemma/flutter_gemma.dart';
 import '../../features/game_board/domain/prompt_manager.dart';
 
@@ -110,7 +111,7 @@ class GemmaLocalService {
       }
       return _parseJson(responseText);
     } catch (e) {
-      print('Gemma Local kelime üretme hatası: $e');
+      debugPrint('Gemma Local kelime üretme hatası: $e');
       rethrow;
     }
   }
@@ -131,7 +132,7 @@ class GemmaLocalService {
       }
       return [];
     } catch (e) {
-      print('Gemma Local JSON parse hatası: $e');
+      debugPrint('Gemma Local JSON parse hatası: $e');
       return [];
     }
   }
