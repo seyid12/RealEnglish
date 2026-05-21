@@ -240,9 +240,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     type: FileType.any,
                   );
                   if (result != null && result.files.single.path != null) {
+                    final path = result.files.single.path!;
                     setState(() {
-                      _gemmaModelPathController.text = result.files.single.path!;
+                      _gemmaModelPathController.text = path;
                     });
+                    
+                    // Otomatik kaydet ve başlat
+                    await notifier.setGemmaModelPath(path);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('✅ Model yolu seçildi ve başlatılıyor... Lütfen bekleyin.'),
+                          backgroundColor: Color(0xFF2D6A4F),
+                        ),
+                      );
+                    }
                   }
                 },
               ),
