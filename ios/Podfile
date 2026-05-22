@@ -49,36 +49,44 @@ post_install do |installer|
   end
 
   # ---------------------------------------------------------------------------
-  # Fix ITMS-90208: flutter_gemma ships pre-built XCFrameworks whose
-  # Info.plist MinimumOSVersion is baked-in. We must patch them at their
-  # SOURCE locations (pub-cache AND Pods) before Xcode embeds them.
+  # Fix ITMS-90208: Apple rejects apps if embedded frameworks have a higher
+  # MinimumOSVersion than the app itself. We MUST patch all Info.plist files
+  # in both ~/.pub-cache (Flutter dependencies) and ios/Pods (Cocoapods).
   # ---------------------------------------------------------------------------
-  target_version = '18.0'
-  home_dir = `echo $HOME`.strip
+  puts "==> [ITMS-90208] Patching MinimumOSVersion for ALL frameworks..."
+  patch_script = <<-SH
+    set -e
+    TARGET_OS="18.0"
+    
+    patch_plist() {
+      local plist="$1"
+      # Only patch if the file actually exists
+      if [ -f "$plist" ]; then
+        /usr/libexec/PlistBuddy -c "Set :MinimumOSVersion $TARGET_OS" "$plist" 2>/dev/null || \\
+        /usr/libexec/PlistBuddy -c "Add :MinimumOSVersion string $TARGET_OS" "$plist" 2>/dev/null || true
+        echo "    [Patched] $plist"
+      fi
+    }
 
-  search_patterns = [
-    "#{installer.sandbox.root}/**/*.framework/Info.plist",
-    "#{home_dir}/.pub-cache/**/*.framework/Info.plist",
-  ]
+    # 1. Patch CocoaPods vendored frameworks (where LiteRtMetalAccelerator lives)
+    if [ -d "Pods" ]; then
+      find Pods -type f -name "Info.plist" | while read plist; do
+        patch_plist "$plist"
+      done
+    fi
 
-  patched = 0
-  search_patterns.each do |pattern|
-    Dir.glob(pattern).each do |plist|
-      # Try Set first (key exists); fall back to Add (key missing)
-      set_ok = system(
-        "/usr/libexec/PlistBuddy", "-c", "Set :MinimumOSVersion #{target_version}",
-        plist, [:out, :err] => File::NULL
-      )
-      unless set_ok
-        system(
-          "/usr/libexec/PlistBuddy", "-c", "Add :MinimumOSVersion string #{target_version}",
-          plist, [:out, :err] => File::NULL
-        )
-      end
-      puts "  [ITMS-90208 fix] Patched MinimumOSVersion=#{target_version}: #{plist}"
-      patched += 1
-    end
-  end
-  puts "  [ITMS-90208 fix] Total patched: #{patched} Info.plist file(s)."
+    # 2. Patch Flutter pub-cache (where flutter_gemma/flutter_litert_lm lives)
+    PUB_CACHE="$HOME/.pub-cache"
+    if [ -d "$PUB_CACHE" ]; then
+      find "$PUB_CACHE" -type f -name "Info.plist" -path "*.framework/Info.plist" | while read plist; do
+        patch_plist "$plist"
+      done
+      find "$PUB_CACHE" -type f -name "Info.plist" -path "*.xcframework/*/Info.plist" | while read plist; do
+        patch_plist "$plist"
+      done
+    fi
+  SH
+  system("/bin/sh", "-c", patch_script)
+  puts "==> [ITMS-90208] Patch complete."
 end
 
