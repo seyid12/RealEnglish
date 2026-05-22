@@ -270,7 +270,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Fix ITMS-90208: Patch MinimumOSVersion in embedded framework Info.plists\nFRAMEWORKS_DIR=\"${CODESIGNING_FOLDER_PATH}/Frameworks\"\nif [ -d \"$FRAMEWORKS_DIR\" ]; then\n  find \"$FRAMEWORKS_DIR\" -name \"Info.plist\" | while read plist; do\n    /usr/libexec/PlistBuddy -c \"Set :MinimumOSVersion ${IPHONEOS_DEPLOYMENT_TARGET}\" \"$plist\" 2>/dev/null || true\n  done\nfi\n";
+			shellScript = "# Fix ITMS-90208: Patch MinimumOSVersion in all embedded XCFramework Info.plists\nset -e\nTARGET_OS=\"${IPHONEOS_DEPLOYMENT_TARGET}\"\npatch_plist() {\n  local plist=\"$1\"\n  /usr/libexec/PlistBuddy -c \"Set :MinimumOSVersion $TARGET_OS\" \"$plist\" 2>/dev/null || \\\n  /usr/libexec/PlistBuddy -c \"Add :MinimumOSVersion string $TARGET_OS\" \"$plist\" 2>/dev/null || true\n  echo \"[ITMS-90208 fix] Patched: $plist\"\n}\n# Try all possible app bundle locations\nfor APP_DIR in \\\n  \"${CODESIGNING_FOLDER_PATH}\" \\\n  \"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\" \\\n  \"${BUILT_PRODUCTS_DIR}/${FULL_PRODUCT_NAME}\"; do\n  if [ -d \"${APP_DIR}/Frameworks\" ]; then\n    echo \"[ITMS-90208 fix] Scanning: ${APP_DIR}/Frameworks\"\n    find \"${APP_DIR}/Frameworks\" -name \"Info.plist\" | while read plist; do\n      patch_plist \"$plist\"\n    done\n  fi\ndone\n# Also patch pub-cache (source of flutter_gemma frameworks)\nPUB_CACHE=\"$HOME/.pub-cache\"\nif [ -d \"$PUB_CACHE\" ]; then\n  find \"$PUB_CACHE\" -name \"Info.plist\" -path \"*.framework/Info.plist\" | while read plist; do\n    patch_plist \"$plist\"\n  done\nfi\necho \"[ITMS-90208 fix] Done.\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

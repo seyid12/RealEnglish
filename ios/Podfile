@@ -42,25 +42,43 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
     target.build_configurations.each do |config|
-      # Force minimum iOS deployment target for all pods to fix ITMS-90208
       if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 18.0
         config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '18.0'
       end
     end
   end
 
-  # Patch MinimumOSVersion in pre-built XCFrameworks inside Pods directory.
-  # This is needed because flutter_gemma ships pre-compiled frameworks
-  # (GemmaModelConstraintProvider, LiteRtMetalAccelerator, StreamProxy,
-  # qdrant_edge_ffi) whose Info.plist MinimumOSVersion is baked-in and
-  # cannot be overridden by build settings alone — causing ITMS-90208.
-  Dir.glob("#{installer.sandbox.root}/**/*.framework/Info.plist").each do |plist|
-    system(
-      "/usr/libexec/PlistBuddy",
-      "-c", "Set :MinimumOSVersion 18.0",
-      plist,
-      [:out, :err] => File::NULL
-    )
-    puts "Patched MinimumOSVersion -> 18.0 in: #{plist}"
+  # ---------------------------------------------------------------------------
+  # Fix ITMS-90208: flutter_gemma ships pre-built XCFrameworks whose
+  # Info.plist MinimumOSVersion is baked-in. We must patch them at their
+  # SOURCE locations (pub-cache AND Pods) before Xcode embeds them.
+  # ---------------------------------------------------------------------------
+  target_version = '18.0'
+  home_dir = `echo $HOME`.strip
+
+  search_patterns = [
+    "#{installer.sandbox.root}/**/*.framework/Info.plist",
+    "#{home_dir}/.pub-cache/**/*.framework/Info.plist",
+  ]
+
+  patched = 0
+  search_patterns.each do |pattern|
+    Dir.glob(pattern).each do |plist|
+      # Try Set first (key exists); fall back to Add (key missing)
+      set_ok = system(
+        "/usr/libexec/PlistBuddy", "-c", "Set :MinimumOSVersion #{target_version}",
+        plist, [:out, :err] => File::NULL
+      )
+      unless set_ok
+        system(
+          "/usr/libexec/PlistBuddy", "-c", "Add :MinimumOSVersion string #{target_version}",
+          plist, [:out, :err] => File::NULL
+        )
+      end
+      puts "  [ITMS-90208 fix] Patched MinimumOSVersion=#{target_version}: #{plist}"
+      patched += 1
+    end
   end
+  puts "  [ITMS-90208 fix] Total patched: #{patched} Info.plist file(s)."
 end
+
