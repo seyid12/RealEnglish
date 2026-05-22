@@ -153,6 +153,7 @@
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
+				FA1B2C3D4E5F60718293A4B5 /* Fix Framework Min OS Version */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 			);
 			buildRules = (
@@ -255,6 +256,21 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "/bin/sh \"$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh\" build";
+		};
+		FA1B2C3D4E5F60718293A4B5 /* Fix Framework Min OS Version */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Fix Framework Min OS Version";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Fix ITMS-90208: Patch MinimumOSVersion in embedded framework Info.plists\nFRAMEWORKS_DIR=\"${CODESIGNING_FOLDER_PATH}/Frameworks\"\nif [ -d \"$FRAMEWORKS_DIR\" ]; then\n  find \"$FRAMEWORKS_DIR\" -name \"Info.plist\" | while read plist; do\n    /usr/libexec/PlistBuddy -c \"Set :MinimumOSVersion ${IPHONEOS_DEPLOYMENT_TARGET}\" \"$plist\" 2>/dev/null || true\n  done\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
