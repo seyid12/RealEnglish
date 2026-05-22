@@ -94,24 +94,6 @@ class WordGeneratorNotifier extends Notifier<WordGeneratorState> {
         }
         debugPrint('[AI Word Generator] Ollama API çağrısı yapılıyor (${settings.ollamaUrl} - ${settings.ollamaModel})...');
         results = await ollama.generateWords(level, count, excludeWords: existingWords, topic: topic);
-      } else if (settings.backend == AiBackend.gemmaLocal) {
-        final gemma = ref.read(gemmaLocalServiceProvider);
-        if (gemma.isLoading) {
-          state = state.copyWith(
-            status: GenerationStatus.error,
-            error: 'Gemma Local modeli şu anda cihazınızda yükleniyor (2-3 GB). Lütfen biraz bekleyip tekrar deneyin...',
-          );
-          return;
-        } else if (!gemma.isConfigured) {
-          debugPrint('[AI Word Generator] Hata: Gemma Local modeli yüklenmemiş veya hazır değil!');
-          state = state.copyWith(
-            status: GenerationStatus.error,
-            error: 'Gemma Local modeli yüklenmemiş veya hazır değil.\nAyarlar > Gemma Yerel Model Ayarları alanından modelinizi seçin.',
-          );
-          return;
-        }
-        debugPrint('[AI Word Generator] Gemma Local modeli çağrısı yapılıyor...');
-        results = await gemma.generateWords(level, count, excludeWords: existingWords, topic: topic);
       }
 
       debugPrint('[AI Word Generator] Yapay zekadan gelen ham kelime sayısı: ${results.length}');

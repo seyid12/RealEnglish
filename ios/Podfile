@@ -48,45 +48,5 @@ post_install do |installer|
     end
   end
 
-  # ---------------------------------------------------------------------------
-  # Fix ITMS-90208: Apple rejects apps if embedded frameworks have a higher
-  # MinimumOSVersion than the app itself. We MUST patch all Info.plist files
-  # in both ~/.pub-cache (Flutter dependencies) and ios/Pods (Cocoapods).
-  # ---------------------------------------------------------------------------
-  puts "==> [ITMS-90208] Patching MinimumOSVersion for ALL frameworks..."
-  patch_script = <<-SH
-    set -e
-    TARGET_OS="18.0"
-    
-    patch_plist() {
-      local plist="$1"
-      # Only patch if the file actually exists
-      if [ -f "$plist" ]; then
-        /usr/libexec/PlistBuddy -c "Set :MinimumOSVersion $TARGET_OS" "$plist" 2>/dev/null || \\
-        /usr/libexec/PlistBuddy -c "Add :MinimumOSVersion string $TARGET_OS" "$plist" 2>/dev/null || true
-        echo "    [Patched] $plist"
-      fi
-    }
-
-    # 1. Patch CocoaPods vendored frameworks (where LiteRtMetalAccelerator lives)
-    if [ -d "Pods" ]; then
-      find Pods -type f -name "Info.plist" | while read plist; do
-        patch_plist "$plist"
-      done
-    fi
-
-    # 2. Patch Flutter pub-cache (where flutter_gemma/flutter_litert_lm lives)
-    PUB_CACHE="$HOME/.pub-cache"
-    if [ -d "$PUB_CACHE" ]; then
-      find "$PUB_CACHE" -type f -name "Info.plist" -path "*.framework/Info.plist" | while read plist; do
-        patch_plist "$plist"
-      done
-      find "$PUB_CACHE" -type f -name "Info.plist" -path "*.xcframework/*/Info.plist" | while read plist; do
-        patch_plist "$plist"
-      done
-    fi
-  SH
-  system("/bin/sh", "-c", patch_script)
-  puts "==> [ITMS-90208] Patch complete."
 end
 
