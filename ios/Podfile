@@ -43,11 +43,24 @@ post_install do |installer|
     flutter_additional_ios_build_settings(target)
     target.build_configurations.each do |config|
       # Force minimum iOS deployment target for all pods to fix ITMS-90208
-      # Some frameworks (LiteRtMetalAccelerator, GemmaModelConstraintProvider,
-      # StreamProxy, qdrant_edge_ffi) require at least iOS 16.0
       if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 18.0
         config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '18.0'
       end
     end
+  end
+
+  # Patch MinimumOSVersion in pre-built XCFrameworks inside Pods directory.
+  # This is needed because flutter_gemma ships pre-compiled frameworks
+  # (GemmaModelConstraintProvider, LiteRtMetalAccelerator, StreamProxy,
+  # qdrant_edge_ffi) whose Info.plist MinimumOSVersion is baked-in and
+  # cannot be overridden by build settings alone — causing ITMS-90208.
+  Dir.glob("#{installer.sandbox.root}/**/*.framework/Info.plist").each do |plist|
+    system(
+      "/usr/libexec/PlistBuddy",
+      "-c", "Set :MinimumOSVersion 18.0",
+      plist,
+      [:out, :err] => File::NULL
+    )
+    puts "Patched MinimumOSVersion -> 18.0 in: #{plist}"
   end
 end
