@@ -1,5 +1,5 @@
 # Uncomment this line to define a global platform for your project
-platform :ios, '16.0'
+platform :ios, '18.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -41,5 +41,13 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      # Force minimum iOS deployment target for all pods to fix ITMS-90208
+      # Some frameworks (LiteRtMetalAccelerator, GemmaModelConstraintProvider,
+      # StreamProxy, qdrant_edge_ffi) require at least iOS 16.0
+      if config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < 18.0
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '18.0'
+      end
+    end
   end
 end
