@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/providers/control_panel_provider.dart';
-import '../../../core/services/vocabulary_repository.dart';
+import '../../../core/providers/command_center_state.dart';
+import '../../../core/services/word_vault_manager.dart';
 
 enum LexiconGenerationStatus { idle, loading, success, error }
 
@@ -52,8 +52,8 @@ class LexiconGeneratorNotifier extends Notifier<LexiconGeneratorState> {
     );
 
     try {
-      final settings = ref.read(controlPanelProvider);
-      final vocabRepo = ref.read(vocabularyRepositoryProvider);
+      final settings = ref.read(commandCenterProvider);
+      final vocabRepo = ref.read(wordVaultManagerProvider);
 
       final existingWords = vocabRepo.getCustomWords(level)
           .map((w) => w['word'].toString())

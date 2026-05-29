@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/providers/control_panel_provider.dart';
+import '../../../core/providers/command_center_state.dart';
 import '../domain/arena_models.dart';
 import '../domain/crossword_compiler.dart';
-import '../../../core/services/vocabulary_repository.dart';
+import '../../../core/services/word_vault_manager.dart';
 import '../../../core/services/tts_service.dart';
 
 class ArenaStatusState {
@@ -93,7 +93,7 @@ class ArenaStatusNotifier extends Notifier<ArenaStatusState> {
   Future<void> _generatePuzzle(String level) async {
     try {
       const int targetCount = 5;
-      final vocabRepo = ref.read(vocabularyRepositoryProvider);
+      final vocabRepo = ref.read(wordVaultManagerProvider);
 
       final allWords = vocabRepo.getCustomWords(level);
 
@@ -252,8 +252,8 @@ class ArenaStatusNotifier extends Notifier<ArenaStatusState> {
       return 'Bu kelime zaten çözülmüş.';
     }
 
-    final settingsNotifier = ref.read(controlPanelProvider.notifier);
-    final currentXp = ref.read(controlPanelProvider).xp;
+    final settingsNotifier = ref.read(commandCenterProvider.notifier);
+    final currentXp = ref.read(commandCenterProvider).xp;
     const hintCost = 20;
 
     if (currentXp < hintCost) {
@@ -322,18 +322,18 @@ class ArenaStatusNotifier extends Notifier<ArenaStatusState> {
     if (allCorrect) {
       ref.read(ttsServiceProvider).speak(placement.word);
 
-      final vocabRepo = ref.read(vocabularyRepositoryProvider);
+      final vocabRepo = ref.read(wordVaultManagerProvider);
       vocabRepo.updateWordSM2(placement.word, true);
 
-      ref.read(controlPanelProvider.notifier).addXp(10);
+      ref.read(commandCenterProvider.notifier).addXp(10);
 
       final newCorrect = Set<int>.from(state.correctPlacements)..add(placementIdx);
       final isComplete = newCorrect.length == state.placements.length;
       
       if (isComplete && state.words != null) {
-        ref.read(controlPanelProvider.notifier).addXp(50);
+        ref.read(commandCenterProvider.notifier).addXp(50);
 
-        final vocabRepo = ref.read(vocabularyRepositoryProvider);
+        final vocabRepo = ref.read(wordVaultManagerProvider);
         final currentWords = state.words!.map((w) => w['word'].toString()).toList();
         
         vocabRepo.saveWords(currentWords, state.currentLevel); 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/providers/control_panel_provider.dart';
-import '../../../core/services/vocabulary_repository.dart';
+import '../../../core/providers/command_center_state.dart';
+import '../../../core/services/word_vault_manager.dart';
 import '../../vocabulary_studio/view/vocabulary_studio_view.dart';
 
 const _kBg = Color(0xFF1A1A2E);
@@ -25,7 +25,7 @@ class _ControlPanelViewState extends ConsumerState<ControlPanelView> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final settings = ref.read(controlPanelProvider);
+      final settings = ref.read(commandCenterProvider);
       _ollamaUrlController.text = settings.ollamaUrl;
       _ollamaModelController.text = settings.ollamaModel;
     });
@@ -40,8 +40,8 @@ class _ControlPanelViewState extends ConsumerState<ControlPanelView> {
 
   @override
   Widget build(BuildContext context) {
-    final settings = ref.watch(controlPanelProvider);
-    final notifier = ref.read(controlPanelProvider.notifier);
+    final settings = ref.watch(commandCenterProvider);
+    final notifier = ref.read(commandCenterProvider.notifier);
 
     return Scaffold(
       backgroundColor: _kBg,
@@ -234,7 +234,7 @@ class _ControlPanelViewState extends ConsumerState<ControlPanelView> {
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
-              final vocabRepo = ref.read(vocabularyRepositoryProvider);
+              final vocabRepo = ref.read(wordVaultManagerProvider);
               await vocabRepo.clearAllWords();
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(

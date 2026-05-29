@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/services/vocabulary_repository.dart';
+import '../../../core/services/word_vault_manager.dart';
 import '../providers/ai_lexicon_generator.dart';
 
 const _kBg = Color(0xFF1A1A2E);
@@ -51,7 +51,7 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
 
   @override
   Widget build(BuildContext context) {
-    final vocabRepo = ref.watch(vocabularyRepositoryProvider);
+    final vocabRepo = ref.watch(wordVaultManagerProvider);
     final genState = ref.watch(aiLexiconGeneratorProvider);
 
     return Scaffold(
@@ -575,7 +575,7 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
                           return;
                         }
 
-                        final vocabRepo = ref.read(vocabularyRepositoryProvider);
+                        final vocabRepo = ref.read(wordVaultManagerProvider);
                         await vocabRepo.addCustomWord(word, clue, _selectedLevel);
 
                         if (context.mounted) {

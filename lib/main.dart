@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'features/stage_picker/view/stage_picker_view.dart';
-import 'core/services/vocabulary_repository.dart';
+import 'core/services/word_vault_manager.dart';
 
 
 void main() async {
@@ -10,14 +10,14 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Hive veritabanını başlat
-  final vocabRepo = VocabularyRepository();
+  final vocabRepo = WordVaultManager();
   await vocabRepo.init();
 
   runApp(
     ProviderScope(
       // Başlatılmış repository'i tüm uygulamaya enjekte ediyoruz
       overrides: [
-        vocabularyRepositoryProvider.overrideWithValue(vocabRepo),
+        wordVaultManagerProvider.overrideWithValue(vocabRepo),
       ],
       child: const AiEnglishCrosswordApp(),
     ),

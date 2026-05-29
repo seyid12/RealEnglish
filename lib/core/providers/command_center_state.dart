@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/ollama_service.dart';
 
-class ControlPanelSettings {
+class CommandCenterState {
   final String ollamaUrl;
   final String ollamaModel;
   final int xp;
@@ -10,7 +10,7 @@ class ControlPanelSettings {
   final int streakCount;
   final String lastActiveDate;
 
-  const ControlPanelSettings({
+  const CommandCenterState({
     this.ollamaUrl = 'http://localhost:11434',
     this.ollamaModel = 'llama3',
     this.xp = 0,
@@ -19,7 +19,7 @@ class ControlPanelSettings {
     this.lastActiveDate = '',
   });
 
-  ControlPanelSettings copyWith({
+  CommandCenterState copyWith({
     String? ollamaUrl,
     String? ollamaModel,
     int? xp,
@@ -27,7 +27,7 @@ class ControlPanelSettings {
     int? streakCount,
     String? lastActiveDate,
   }) {
-    return ControlPanelSettings(
+    return CommandCenterState(
       ollamaUrl: ollamaUrl ?? this.ollamaUrl,
       ollamaModel: ollamaModel ?? this.ollamaModel,
       xp: xp ?? this.xp,
@@ -38,7 +38,7 @@ class ControlPanelSettings {
   }
 }
 
-class ControlPanelNotifier extends Notifier<ControlPanelSettings> {
+class CommandCenterNotifier extends Notifier<CommandCenterState> {
   static const _keyOllamaUrl = 'ollama_url';
   static const _keyOllamaModel = 'ollama_model';
   static const _keyXp = 'user_xp';
@@ -47,9 +47,9 @@ class ControlPanelNotifier extends Notifier<ControlPanelSettings> {
   static const _keyLastActive = 'user_last_active';
 
   @override
-  ControlPanelSettings build() {
+  CommandCenterState build() {
     _loadSettings();
-    return const ControlPanelSettings();
+    return const CommandCenterState();
   }
 
   Future<void> _loadSettings() async {
@@ -61,7 +61,7 @@ class ControlPanelNotifier extends Notifier<ControlPanelSettings> {
     final streak = prefs.getInt(_keyStreak) ?? 0;
     final lastActive = prefs.getString(_keyLastActive) ?? '';
 
-    state = ControlPanelSettings(
+    state = CommandCenterState(
       ollamaUrl: ollamaUrl,
       ollamaModel: ollamaModel,
       xp: xp,
@@ -154,8 +154,8 @@ class ControlPanelNotifier extends Notifier<ControlPanelSettings> {
   }
 }
 
-final controlPanelProvider =
-    NotifierProvider<ControlPanelNotifier, ControlPanelSettings>(() => ControlPanelNotifier());
+final commandCenterProvider =
+    NotifierProvider<CommandCenterNotifier, CommandCenterState>(() => CommandCenterNotifier());
 
 
 final ollamaServiceProvider = Provider((ref) {

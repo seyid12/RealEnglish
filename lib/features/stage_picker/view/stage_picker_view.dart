@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/providers/control_panel_provider.dart';
+import '../../../core/providers/command_center_state.dart';
 import '../../crossword_arena/view/crossword_arena_view.dart';
 import '../../control_panel/view/control_panel_view.dart';
 import '../../vocabulary_studio/view/vocabulary_studio_view.dart';
@@ -16,7 +16,7 @@ class StagePickerView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(controlPanelProvider);
+    final settings = ref.watch(commandCenterProvider);
 
     return Scaffold(
       backgroundColor: _kBg,
