@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:animate_do/animate_do.dart';
+import '../../../core/widgets/animated_background.dart';
+import '../../../core/widgets/glassmorphic_card.dart';
 import '../../../core/theme/color_palette.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -57,30 +60,40 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
     final genState = ref.watch(aiLexiconGeneratorProvider);
 
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: Colors.transparent, // Handled by AnimatedBackground
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: _kCard,
-        title: const Text('Kelimelerim 📝',
-            style: TextStyle(color: _kText, fontWeight: FontWeight.bold)),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: _kText),
-          onPressed: () => Navigator.pop(context),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: FadeInDown(
+          child: const Text('Kelimelerim 📝',
+              style: TextStyle(color: _kText, fontWeight: FontWeight.bold)),
+        ),
+        leading: FadeInLeft(
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back, color: _kText),
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: ColorPalette.secondary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          FadeInRight(
+            child: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: FilledButton.icon(
+                style: FilledButton.styleFrom(
+                  backgroundColor: ColorPalette.secondary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  elevation: 8,
+                  shadowColor: ColorPalette.secondary.withValues(alpha: 0.5),
+                ),
+                onPressed: genState.isLoading ? null : () => _showAiGenerateSheet(context),
+                icon: genState.isLoading
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.auto_awesome, size: 18),
+                label: Text(genState.isLoading ? 'Üretiliyor...' : 'AI ile Üret'),
               ),
-              onPressed: genState.isLoading ? null : () => _showAiGenerateSheet(context),
-              icon: genState.isLoading
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Icon(Icons.auto_awesome, size: 18),
-              label: Text(genState.isLoading ? 'Üretiliyor...' : 'AI ile Üret'),
             ),
           ),
         ],
@@ -89,93 +102,99 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
           indicatorColor: _kAccent,
           labelColor: _kAccent,
           unselectedLabelColor: _kSubtext,
+          dividerColor: Colors.white10,
           tabs: _levels.map((lvl) {
             final count = vocabRepo.getCustomWords(lvl).length;
             return Tab(text: '$lvl ($count)');
           }).toList(),
         ),
       ),
-      body: SafeArea(
-        child: TabBarView(
-          controller: _tabController,
-          children: _levels.map((level) {
-            final words = vocabRepo.getCustomWords(level);
+      body: AnimatedBackground(
+        child: SafeArea(
+          child: TabBarView(
+            controller: _tabController,
+            children: _levels.map((level) {
+              final words = vocabRepo.getCustomWords(level);
 
-            if (words.isEmpty) {
-              return _buildEmptyState(level);
-            }
+              if (words.isEmpty) {
+                return FadeInUp(child: _buildEmptyState(level));
+              }
 
-            return ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: words.length,
-              itemBuilder: (context, index) {
-                final item = words[index];
-                final word = item['word'].toString();
-                final clue = item['clue'].toString();
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: words.length,
+                itemBuilder: (context, index) {
+                  final item = words[index];
+                  final word = item['word'].toString();
+                  final clue = item['clue'].toString();
 
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: _kCard,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white10),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  return FadeInUp(
+                    delay: Duration(milliseconds: 50 * index),
+                    duration: const Duration(milliseconds: 400),
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 12.0),
+                      child: GlassmorphicCard(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Row(
                           children: [
-                            Text(
-                              word,
-                              style: const TextStyle(
-                                color: _kText,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.0,
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    word,
+                                    style: const TextStyle(
+                                      color: _kText,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.0,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    clue,
+                                    style: const TextStyle(
+                                      color: _kSubtext,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              clue,
-                              style: const TextStyle(
-                                color: _kSubtext,
-                                fontSize: 14,
-                              ),
+                            IconButton(
+                              icon: const Icon(Icons.delete_outline, color: _kDanger),
+                              onPressed: () async {
+                                await vocabRepo.deleteCustomWordByValue(word);
+                                _refresh();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('🗑️ "$word" kelimesi silindi.'),
+                                      backgroundColor: _kDanger,
+                                      duration: const Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
+                              },
                             ),
                           ],
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.delete_outline, color: _kDanger),
-                        onPressed: () async {
-                          await vocabRepo.deleteCustomWordByValue(word);
-                          _refresh();
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('🗑️ "$word" kelimesi silindi.'),
-                                backgroundColor: _kDanger,
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                );
-              },
-            );
-          }).toList(),
+                    ),
+                  );
+                },
+              );
+            }).toList(),
+          ),
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: _kAccent,
-        onPressed: () => _showAddWordDialog(context),
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text('Kelime Ekle', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      floatingActionButton: BounceInUp(
+        child: FloatingActionButton.extended(
+          backgroundColor: _kAccent,
+          onPressed: () => _showAddWordDialog(context),
+          icon: const Icon(Icons.add, color: Colors.white),
+          label: const Text('Kelime Ekle', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        ),
       ),
     );
   }

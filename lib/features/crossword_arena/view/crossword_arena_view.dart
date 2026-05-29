@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:animate_do/animate_do.dart';
+import '../../../core/widgets/animated_background.dart';
 import '../../../core/theme/color_palette.dart';
 
 import 'package:flutter/services.dart';
@@ -7,9 +9,6 @@ import '../domain/arena_models.dart';
 import '../providers/arena_status_provider.dart';
 import '../../vocabulary_studio/view/vocabulary_studio_view.dart';
 import '../../../core/services/tts_service.dart';
-
-
-const _kBg = ColorPalette.background;
 const _kCellNormal = ColorPalette.cellNormal;
 const _kCellSelected = ColorPalette.cellSelected;
 const _kCellCursor = ColorPalette.cellCursor;
@@ -66,25 +65,35 @@ class _CrosswordArenaViewState extends ConsumerState<CrosswordArenaView> {
         }
       },
       child: Scaffold(
-        backgroundColor: _kBg,
+        backgroundColor: Colors.transparent, // AnimatedBackground
+        extendBodyBehindAppBar: true,
         appBar: AppBar(
-          backgroundColor: ColorPalette.surface,
-          title: Text('${widget.level} Seviyesi',
-              style: const TextStyle(color: _kTextNormal, fontWeight: FontWeight.bold)),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: _kTextNormal),
-            onPressed: () => Navigator.pop(context),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          title: FadeInDown(
+            child: Text('${widget.level} Seviyesi',
+                style: const TextStyle(color: _kTextNormal, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+          ),
+          leading: FadeInLeft(
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: _kTextNormal),
+              onPressed: () => Navigator.pop(context),
+            ),
           ),
           actions: [
             if (gameState.isComplete)
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Icon(Icons.star, color: Colors.amber, size: 28),
+              ZoomIn(
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Icon(Icons.star, color: Colors.amber, size: 28),
+                ),
               ),
           ],
         ),
-        body: SafeArea(
-          child: _buildBody(gameState),
+        body: AnimatedBackground(
+          child: SafeArea(
+            child: _buildBody(gameState),
+          ),
         ),
       ),
     );
@@ -244,18 +253,20 @@ class _CrosswordArenaViewState extends ConsumerState<CrosswordArenaView> {
     );
   }
 
-  Widget _buildCompleteBanner() => Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        color: _kCellCorrect,
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.star, color: Colors.amber),
-            SizedBox(width: 8),
-            Text('Tebrikler! Bulmacayı Tamamladın! 🎉',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-          ],
+  Widget _buildCompleteBanner() => FadeInDown(
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          color: _kCellCorrect,
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.star, color: Colors.amber),
+              SizedBox(width: 8),
+              Text('Tebrikler! Bulmacayı Tamamladın! 🎉',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+            ],
+          ),
         ),
       );
 
@@ -369,32 +380,45 @@ class _ArenaCellWidget extends StatelessWidget {
     final isCorrect = gameState.isCellCorrect(cell.x, cell.y);
     final userChar = gameState.userCharAt(cell.x, cell.y);
 
+    Color glowColor = Colors.transparent;
     Color bgColor;
     Color borderColor;
+
     if (isCorrect) {
-      bgColor = _kCellCorrect;
+      bgColor = _kCellCorrect.withValues(alpha: 0.9);
       borderColor = _kTextCorrect;
+      glowColor = _kCellCorrect;
     } else if (isCursor) {
-      bgColor = _kCellCursor;
+      bgColor = _kCellCursor.withValues(alpha: 0.9);
       borderColor = Colors.white;
+      glowColor = Colors.white;
     } else if (isInSelectedWord) {
-      bgColor = _kCellSelected;
-      borderColor = _kAccent.withValues(alpha: 0.6);
+      bgColor = _kCellSelected.withValues(alpha: 0.8);
+      borderColor = _kAccent;
+      glowColor = _kAccent.withValues(alpha: 0.6);
     } else {
-      bgColor = _kCellNormal;
+      bgColor = _kCellNormal.withValues(alpha: 0.5);
       borderColor = Colors.white12;
     }
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
         width: 40,
         height: 40,
         margin: const EdgeInsets.all(2),
         decoration: BoxDecoration(
           color: bgColor,
-          border: Border.all(color: borderColor, width: isCursor ? 2 : 1),
-          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: borderColor, width: isCursor ? 2.5 : 1),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: glowColor != Colors.transparent ? [
+            BoxShadow(
+              color: glowColor,
+              blurRadius: 8,
+              spreadRadius: 1,
+            )
+          ] : [],
         ),
         child: Stack(
           children: [
@@ -414,6 +438,9 @@ class _ArenaCellWidget extends StatelessWidget {
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: isCorrect ? _kTextCorrect : _kTextNormal,
+                  shadows: isCorrect ? [
+                    const Shadow(color: Colors.black26, blurRadius: 4, offset: Offset(1, 1))
+                  ] : [],
                 ),
               ),
             ),

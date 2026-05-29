@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'color_palette.dart';
 
 class AppTheme {
@@ -7,6 +8,9 @@ class AppTheme {
       brightness: Brightness.dark,
       primaryColor: ColorPalette.primary,
       scaffoldBackgroundColor: ColorPalette.background,
+      textTheme: GoogleFonts.spaceGroteskTextTheme(
+        ThemeData.dark().textTheme,
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -24,7 +28,6 @@ class AppTheme {
           shadowColor: ColorPalette.primary.withValues(alpha: 0.5),
         ),
       ),
-      fontFamily: 'Inter', // Or any default font you prefer
     );
   }
 }
