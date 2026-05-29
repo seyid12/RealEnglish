@@ -74,6 +74,6 @@
 		<true/>
 	</dict>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Ollama yerel yapay zeka sunucusuna bağlanıp kelime üretebilmek için yerel ağ erişimi gereklidir.</string>
+	<string>Required to connect to a local Ollama AI server on your network to generate custom crossword words. This feature is optional; the app works fully offline without it.</string>
 </dict>
 </plist>
