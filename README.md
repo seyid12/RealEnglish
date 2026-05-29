@@ -19,7 +19,7 @@ The application features a fully custom, handcrafted "Cyberpunk / Neon" user int
 
 If you are an App Store user experiencing issues, or if you have any questions or feedback regarding the RealEnglish app, we are here to help!
 
-- **Email Support:** seyid12@users.noreply.github.com (Please replace with your actual support email if needed)
+- **Email Support:** seyidyildiz416@gmail.com
 - **Bug Reports:** Feel free to open an [Issue](https://github.com/seyid12/RealEnglish/issues) in this repository.
 - **Feature Requests:** Have a great idea? Open a discussion or issue and let us know!
 
