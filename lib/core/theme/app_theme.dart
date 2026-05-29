@@ -5,27 +5,29 @@ import 'color_palette.dart';
 class AppTheme {
   static ThemeData get darkTheme {
     return ThemeData(
-      brightness: Brightness.dark,
+      brightness: Brightness.light, // Neo-brutalism is typically light mode based
       primaryColor: ColorPalette.primary,
       scaffoldBackgroundColor: ColorPalette.background,
-      textTheme: GoogleFonts.spaceGroteskTextTheme(
-        ThemeData.dark().textTheme,
+      textTheme: GoogleFonts.spaceGroteskTextTheme().apply(
+        bodyColor: ColorPalette.textPrimary,
+        displayColor: ColorPalette.textPrimary,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        iconTheme: IconThemeData(color: ColorPalette.textPrimary),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: ColorPalette.primary,
-          foregroundColor: ColorPalette.textDark,
+          foregroundColor: ColorPalette.surface,
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.zero,
+            side: const BorderSide(color: ColorPalette.textDark, width: 3),
           ),
-          elevation: 8,
-          shadowColor: ColorPalette.primary.withValues(alpha: 0.5),
+          elevation: 0,
         ),
       ),
     );

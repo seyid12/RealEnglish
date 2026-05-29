@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
-import '../../../core/widgets/animated_background.dart';
+
 import '../../../core/theme/color_palette.dart';
 
 import 'package:flutter/services.dart';
@@ -9,15 +9,14 @@ import '../domain/arena_models.dart';
 import '../providers/arena_status_provider.dart';
 import '../../vocabulary_studio/view/vocabulary_studio_view.dart';
 import '../../../core/services/tts_service.dart';
+import '../../../core/widgets/neo_brutalist_button.dart';
 const _kCellNormal = ColorPalette.cellNormal;
 const _kCellSelected = ColorPalette.cellSelected;
 const _kCellCursor = ColorPalette.cellCursor;
 const _kCellCorrect = ColorPalette.cellCorrect;
 const _kTextNormal = ColorPalette.textPrimary;
-const _kTextCorrect = ColorPalette.textDark;
 const _kAccent = ColorPalette.primary;
 const _kKeyBg = ColorPalette.surface;
-const _kKeyPressed = ColorPalette.primary;
 
 class CrosswordArenaView extends ConsumerStatefulWidget {
   final String level;
@@ -65,18 +64,24 @@ class _CrosswordArenaViewState extends ConsumerState<CrosswordArenaView> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.transparent, // AnimatedBackground
-        extendBodyBehindAppBar: true,
+        backgroundColor: ColorPalette.background,
         appBar: AppBar(
-          backgroundColor: Colors.transparent,
+          backgroundColor: ColorPalette.background,
           elevation: 0,
           title: FadeInDown(
-            child: Text('${widget.level} Seviyesi',
-                style: const TextStyle(color: _kTextNormal, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: ColorPalette.surface,
+                border: Border.all(color: ColorPalette.textDark, width: 3),
+              ),
+              child: Text('${widget.level} SEVİYESİ',
+                  style: const TextStyle(color: _kTextNormal, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+            ),
           ),
           leading: FadeInLeft(
             child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: _kTextNormal),
+              icon: const Icon(Icons.arrow_back, color: _kTextNormal, size: 32),
               onPressed: () => Navigator.pop(context),
             ),
           ),
@@ -85,15 +90,13 @@ class _CrosswordArenaViewState extends ConsumerState<CrosswordArenaView> {
               ZoomIn(
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Icon(Icons.star, color: Colors.amber, size: 28),
+                  child: Icon(Icons.star, color: Colors.amber, size: 36),
                 ),
               ),
           ],
         ),
-        body: AnimatedBackground(
-          child: SafeArea(
-            child: _buildBody(gameState),
-          ),
+        body: SafeArea(
+          child: _buildBody(gameState),
         ),
       ),
     );
@@ -139,16 +142,14 @@ class _CrosswordArenaViewState extends ConsumerState<CrosswordArenaView> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
+              const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: _kAccent,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
+                child: NeoBrutalistButton(
                   icon: const Icon(Icons.auto_awesome, color: Colors.white),
-                  label: const Text('Kelimelerim\'e Git', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  label: 'Kelimelerim\'e Git', 
+                  backgroundColor: _kAccent,
+                  foregroundColor: Colors.white,
                   onPressed: () => Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (_) => const VocabularyStudioView()),
@@ -173,10 +174,11 @@ class _CrosswordArenaViewState extends ConsumerState<CrosswordArenaView> {
                 textAlign: TextAlign.center,
                 style: const TextStyle(color: _kTextNormal, fontSize: 16)),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(backgroundColor: _kAccent),
+            NeoBrutalistButton(
+              backgroundColor: _kAccent,
+              foregroundColor: ColorPalette.surface,
               icon: const Icon(Icons.refresh),
-              label: const Text('Tekrar Dene'),
+              label: 'TEKRAR DENE',
               onPressed: () => ref.read(arenaStatusProvider.notifier).startGame(widget.level),
             ),
           ],
@@ -256,15 +258,18 @@ class _CrosswordArenaViewState extends ConsumerState<CrosswordArenaView> {
   Widget _buildCompleteBanner() => FadeInDown(
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          color: _kCellCorrect,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: const BoxDecoration(
+            color: _kCellCorrect,
+            border: Border.symmetric(horizontal: BorderSide(color: ColorPalette.textDark, width: 4)),
+          ),
           child: const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.star, color: Colors.amber),
+              Icon(Icons.star, color: Colors.amber, size: 32),
               SizedBox(width: 8),
-              Text('Tebrikler! Bulmacayı Tamamladın! 🎉',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              Text('TEBRİKLER! BULMACAYI TAMAMLADIN! 🎉',
+                  style: TextStyle(color: ColorPalette.textDark, fontWeight: FontWeight.w900, fontSize: 18)),
             ],
           ),
         ),
@@ -280,10 +285,13 @@ class _CrosswordArenaViewState extends ConsumerState<CrosswordArenaView> {
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          color: ColorPalette.surface,
+          decoration: const BoxDecoration(
+            color: ColorPalette.surface,
+            border: Border.symmetric(horizontal: BorderSide(color: ColorPalette.textDark, width: 3)),
+          ),
           child: Row(
             children: [
-              const Icon(Icons.lightbulb, color: Colors.amber, size: 22),
+              const Icon(Icons.lightbulb, color: Colors.amber, size: 28),
               const SizedBox(width: 12),
               Expanded(
                 child: placement != null
@@ -292,15 +300,15 @@ class _CrosswordArenaViewState extends ConsumerState<CrosswordArenaView> {
                           children: [
                             TextSpan(
                               text: '${placement.number}. ',
-                              style: const TextStyle(color: _kAccent, fontWeight: FontWeight.bold, fontSize: 15),
+                              style: const TextStyle(color: _kAccent, fontWeight: FontWeight.w900, fontSize: 16),
                             ),
                             TextSpan(
-                              text: placement.clue,
-                              style: const TextStyle(color: _kTextNormal, fontSize: 15),
+                              text: placement.clue.toUpperCase(),
+                              style: const TextStyle(color: _kTextNormal, fontWeight: FontWeight.w900, fontSize: 16),
                             ),
                             TextSpan(
-                              text: '  (${placement.word.length} harf)',
-                              style: const TextStyle(color: Colors.white38, fontSize: 13),
+                              text: '  (${placement.word.length} HARF)',
+                              style: const TextStyle(color: ColorPalette.textSecondary, fontWeight: FontWeight.w900, fontSize: 14),
                             ),
                           ],
                         ),
@@ -380,67 +388,53 @@ class _ArenaCellWidget extends StatelessWidget {
     final isCorrect = gameState.isCellCorrect(cell.x, cell.y);
     final userChar = gameState.userCharAt(cell.x, cell.y);
 
-    Color glowColor = Colors.transparent;
     Color bgColor;
-    Color borderColor;
 
     if (isCorrect) {
-      bgColor = _kCellCorrect.withValues(alpha: 0.9);
-      borderColor = _kTextCorrect;
-      glowColor = _kCellCorrect;
+      bgColor = _kCellCorrect;
     } else if (isCursor) {
-      bgColor = _kCellCursor.withValues(alpha: 0.9);
-      borderColor = Colors.white;
-      glowColor = Colors.white;
+      bgColor = _kCellCursor;
     } else if (isInSelectedWord) {
-      bgColor = _kCellSelected.withValues(alpha: 0.8);
-      borderColor = _kAccent;
-      glowColor = _kAccent.withValues(alpha: 0.6);
+      bgColor = _kCellSelected;
     } else {
-      bgColor = _kCellNormal.withValues(alpha: 0.5);
-      borderColor = Colors.white12;
+      bgColor = _kCellNormal;
     }
 
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: 40,
-        height: 40,
+        duration: const Duration(milliseconds: 150),
+        width: 44,
+        height: 44,
         margin: const EdgeInsets.all(2),
         decoration: BoxDecoration(
           color: bgColor,
-          border: Border.all(color: borderColor, width: isCursor ? 2.5 : 1),
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: glowColor != Colors.transparent ? [
+          border: Border.all(color: ColorPalette.textDark, width: 3),
+          boxShadow: const [
             BoxShadow(
-              color: glowColor,
-              blurRadius: 8,
-              spreadRadius: 1,
+              color: ColorPalette.textDark,
+              offset: Offset(3, 3),
             )
-          ] : [],
+          ],
         ),
         child: Stack(
           children: [
             if (cell.number != null)
               Positioned(
                 top: 2,
-                left: 3,
+                left: 4,
                 child: Text(
                   '${cell.number}',
-                  style: const TextStyle(fontSize: 9, color: Colors.white54, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 10, color: ColorPalette.textDark, fontWeight: FontWeight.w900),
                 ),
               ),
             Center(
               child: Text(
-                userChar.isNotEmpty ? userChar : '',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: isCorrect ? _kTextCorrect : _kTextNormal,
-                  shadows: isCorrect ? [
-                    const Shadow(color: Colors.black26, blurRadius: 4, offset: Offset(1, 1))
-                  ] : [],
+                userChar.isNotEmpty ? userChar.toUpperCase() : '',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: ColorPalette.textDark,
                 ),
               ),
             ),
@@ -509,24 +503,28 @@ class _ArenaKeyButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2),
-      child: Material(
-        color: color ?? _kKeyBg,
-        borderRadius: BorderRadius.circular(6),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(6),
-          onTap: onPressed,
-          splashColor: _kKeyPressed.withValues(alpha: 0.4),
-          child: Container(
-            width: width,
-            height: 42,
-            alignment: Alignment.center,
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: _kTextNormal,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
+      child: GestureDetector(
+        onTap: onPressed,
+        child: Container(
+          width: width,
+          height: 46,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: color ?? _kKeyBg,
+            border: Border.all(color: ColorPalette.textDark, width: 2),
+            boxShadow: const [
+              BoxShadow(
+                color: ColorPalette.textDark,
+                offset: Offset(2, 2),
+              )
+            ],
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: ColorPalette.textDark,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
             ),
           ),
         ),

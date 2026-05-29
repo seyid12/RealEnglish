@@ -1,33 +1,30 @@
 import 'package:flutter/material.dart';
 
 class ColorPalette {
-  // Backgrounds
-  static const Color background = Color(0xFF0B0914); // Deep Cosmic Black/Purple
-  static const Color surface = Color(0xFF161324);    // Card Surface
-  static const Color surfaceLighter = Color(0xFF251F3D); 
-
-  // Accents & Neon
-  static const Color primary = Color(0xFF00E5FF);    // Neon Cyan
-  static const Color primaryDark = Color(0xFF008B99); 
-  static const Color secondary = Color(0xFF7C3AED);  // Vibrant Purple
-  static const Color secondaryDark = Color(0xFF4C1D95);
-  static const Color tertiary = Color(0xFFFF007F);   // Neon Pink
+  // Neo-Brutalism Palette
+  static const Color background = Color(0xFFF4F4F0); // Off-white/light gray
+  static const Color surface = Color(0xFFFFFFFF); // Pure white
+  static const Color surfaceLighter = Color(0xFFFFFFFF); 
   
-  // Game Cells
-  static const Color cellNormal = Color(0xFF1E1A33);
-  static const Color cellSelected = Color(0xFF4C1D95);
-  static const Color cellCursor = Color(0xFF00E5FF);
-  static const Color cellCorrect = Color(0xFF00E676); // Emerald Green
+  static const Color primary = Color(0xFFFF3366); // Hot Pink
+  static const Color primaryDark = Color(0xFFCC0033); 
+  static const Color secondary = Color(0xFF00E5FF); // Cyan
+  static const Color secondaryDark = Color(0xFF00B3CC);
+  static const Color tertiary = Color(0xFFFFD500); // Bright Yellow
   
-  // Text
-  static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFFA09DB0);
-  static const Color textDark = Color(0xFF0B0914);
+  static const Color success = Color(0xFF00FF66); // Neon Green
+  static const Color error = Color(0xFFFF3333); // Bright Red
+  static const Color warning = Color(0xFFFFD500); // Bright Yellow
 
-  // Status Colors
-  static const Color success = Color(0xFF00E676);
-  static const Color error = Color(0xFFFF3366);
-  static const Color warning = Color(0xFFFFD600);
+  static const Color textPrimary = Color(0xFF111111); // Almost black
+  static const Color textSecondary = Color(0xFF444444); // Dark gray
+  static const Color textDark = Color(0xFF000000); // Pure black
+
+  // Crossword Cells
+  static const Color cellNormal = Color(0xFFFFFFFF);
+  static const Color cellSelected = Color(0xFF00E5FF);
+  static const Color cellCursor = Color(0xFFFFD500);
+  static const Color cellCorrect = Color(0xFF00FF66);
 
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(

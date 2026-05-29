@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
-import '../../../core/widgets/animated_background.dart';
-import '../../../core/widgets/glassmorphic_card.dart';
 import '../../../core/theme/color_palette.dart';
-
+import '../../../core/widgets/neo_brutalist_card.dart';
+import '../../../core/widgets/neo_brutalist_button.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/word_vault_manager.dart';
 import '../providers/ai_lexicon_generator.dart';
@@ -11,7 +10,6 @@ import '../providers/ai_lexicon_generator.dart';
 const _kBg = ColorPalette.background;
 const _kCard = ColorPalette.surface;
 const _kAccent = ColorPalette.primary;
-const _kText = ColorPalette.textPrimary;
 const _kSubtext = ColorPalette.textSecondary;
 const _kSuccess = ColorPalette.success;
 const _kDanger = ColorPalette.error;
@@ -60,140 +58,148 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
     final genState = ref.watch(aiLexiconGeneratorProvider);
 
     return Scaffold(
-      backgroundColor: Colors.transparent, // Handled by AnimatedBackground
-      extendBodyBehindAppBar: true,
+      backgroundColor: _kBg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: _kBg,
         elevation: 0,
         title: FadeInDown(
-          child: const Text('Kelimelerim 📝',
-              style: TextStyle(color: _kText, fontWeight: FontWeight.bold)),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: ColorPalette.tertiary,
+              border: Border.all(color: ColorPalette.textDark, width: 3),
+              boxShadow: const [
+                BoxShadow(color: ColorPalette.textDark, offset: Offset(4, 4))
+              ],
+            ),
+            child: const Text('KELİMELERİM 📝',
+                style: TextStyle(color: ColorPalette.textDark, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+          ),
         ),
         leading: FadeInLeft(
           child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: _kText),
+            icon: const Icon(Icons.arrow_back, color: ColorPalette.textDark, size: 32),
             onPressed: () => Navigator.pop(context),
           ),
         ),
         actions: [
           FadeInRight(
             child: Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: ColorPalette.secondary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  elevation: 8,
-                  shadowColor: ColorPalette.secondary.withValues(alpha: 0.5),
-                ),
-                onPressed: genState.isLoading ? null : () => _showAiGenerateSheet(context),
+              padding: const EdgeInsets.only(right: 8, top: 8, bottom: 8),
+              child: NeoBrutalistButton(
+                backgroundColor: ColorPalette.secondary,
+                foregroundColor: ColorPalette.textDark,
+                onPressed: genState.isLoading ? () {} : () => _showAiGenerateSheet(context),
                 icon: genState.isLoading
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Icon(Icons.auto_awesome, size: 18),
-                label: Text(genState.isLoading ? 'Üretiliyor...' : 'AI ile Üret'),
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 3, color: ColorPalette.textDark))
+                    : const Icon(Icons.auto_awesome, size: 18, color: ColorPalette.textDark),
+                label: genState.isLoading ? '...' : 'AI',
               ),
             ),
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
-          indicatorColor: _kAccent,
-          labelColor: _kAccent,
+          indicatorColor: ColorPalette.textDark,
+          indicatorWeight: 4,
+          labelColor: ColorPalette.textDark,
           unselectedLabelColor: _kSubtext,
-          dividerColor: Colors.white10,
+          labelStyle: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16),
           tabs: _levels.map((lvl) {
             final count = vocabRepo.getCustomWords(lvl).length;
             return Tab(text: '$lvl ($count)');
           }).toList(),
         ),
       ),
-      body: AnimatedBackground(
-        child: SafeArea(
-          child: TabBarView(
-            controller: _tabController,
-            children: _levels.map((level) {
-              final words = vocabRepo.getCustomWords(level);
+      body: SafeArea(
+        child: TabBarView(
+          controller: _tabController,
+          children: _levels.map((level) {
+            final words = vocabRepo.getCustomWords(level);
 
-              if (words.isEmpty) {
-                return FadeInUp(child: _buildEmptyState(level));
-              }
+            if (words.isEmpty) {
+              return FadeInUp(child: _buildEmptyState(level));
+            }
 
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: words.length,
-                itemBuilder: (context, index) {
-                  final item = words[index];
-                  final word = item['word'].toString();
-                  final clue = item['clue'].toString();
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: words.length,
+              itemBuilder: (context, index) {
+                final item = words[index];
+                final word = item['word'].toString();
+                final clue = item['clue'].toString();
 
-                  return FadeInUp(
-                    delay: Duration(milliseconds: 50 * index),
-                    duration: const Duration(milliseconds: 400),
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 12.0),
-                      child: GlassmorphicCard(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    word,
-                                    style: const TextStyle(
-                                      color: _kText,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.0,
-                                    ),
+                return FadeInUp(
+                  delay: Duration(milliseconds: 50 * index),
+                  duration: const Duration(milliseconds: 400),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: NeoBrutalistCard(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  word.toUpperCase(),
+                                  style: const TextStyle(
+                                    color: ColorPalette.textDark,
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 2.0,
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    clue,
-                                    style: const TextStyle(
-                                      color: _kSubtext,
-                                      fontSize: 14,
-                                    ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  clue,
+                                  style: const TextStyle(
+                                    color: ColorPalette.textDark,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                            IconButton(
-                              icon: const Icon(Icons.delete_outline, color: _kDanger),
-                              onPressed: () async {
-                                await vocabRepo.deleteCustomWordByValue(word);
-                                _refresh();
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('🗑️ "$word" kelimesi silindi.'),
-                                      backgroundColor: _kDanger,
-                                      duration: const Duration(seconds: 2),
-                                    ),
-                                  );
-                                }
-                              },
-                            ),
-                          ],
-                        ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline, color: _kDanger, size: 32),
+                            onPressed: () async {
+                              await vocabRepo.deleteCustomWordByValue(word);
+                              _refresh();
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('🗑️ "$word" kelimesi silindi.', style: const TextStyle(fontWeight: FontWeight.w900)),
+                                    backgroundColor: _kDanger,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                },
-              );
-            }).toList(),
-          ),
+                  ),
+                );
+              },
+            );
+          }).toList(),
         ),
       ),
       floatingActionButton: BounceInUp(
         child: FloatingActionButton.extended(
           backgroundColor: _kAccent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.zero,
+            side: const BorderSide(color: ColorPalette.textDark, width: 3),
+          ),
+          elevation: 0,
           onPressed: () => _showAddWordDialog(context),
-          icon: const Icon(Icons.add, color: Colors.white),
-          label: const Text('Kelime Ekle', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          icon: const Icon(Icons.add, color: ColorPalette.textDark, size: 28),
+          label: const Text('EKLE', style: TextStyle(color: ColorPalette.textDark, fontWeight: FontWeight.w900, fontSize: 18)),
         ),
       ),
     );
@@ -207,30 +213,31 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(color: _kCard, shape: BoxShape.circle),
-              child: const Icon(Icons.auto_awesome, size: 64, color: _kSubtext),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              '$level Seviyesinde Kelime Yok',
-              style: const TextStyle(color: _kText, fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Sağ üstteki "AI ile Üret" butonuna basarak yapay zeka ile hızlıca kelime havuzu oluşturun!',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: _kSubtext, fontSize: 14),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ColorPalette.secondary,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: ColorPalette.surface,
+                border: Border.all(color: ColorPalette.textDark, width: 4),
+                boxShadow: const [BoxShadow(color: ColorPalette.textDark, offset: Offset(6, 6))],
               ),
-              icon: const Icon(Icons.auto_awesome, color: Colors.white),
-              label: const Text('AI ile Kelime Üret', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              child: const Icon(Icons.auto_awesome, size: 64, color: ColorPalette.textDark),
+            ),
+            const SizedBox(height: 32),
+            Text(
+              '$level SEVİYESİ BOŞ',
+              style: const TextStyle(color: ColorPalette.textDark, fontSize: 24, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Yapay zeka ile hızlıca kelime havuzu oluşturun!',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: ColorPalette.textSecondary, fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 32),
+            NeoBrutalistButton(
+              backgroundColor: ColorPalette.secondary,
+              foregroundColor: ColorPalette.textDark,
+              icon: const Icon(Icons.auto_awesome, color: ColorPalette.textDark),
+              label: 'AI ÜRETİMİ',
               onPressed: () => _showAiGenerateSheet(context),
             ),
           ],
@@ -250,7 +257,8 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
       isScrollControlled: true,
       backgroundColor: _kBg,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.zero,
+        side: BorderSide(color: ColorPalette.textDark, width: 4),
       ),
       builder: (context) {
         return StatefulBuilder(
@@ -267,119 +275,39 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
                   children: [
                     const Row(
                       children: [
-                        Icon(Icons.auto_awesome, color: ColorPalette.secondary, size: 24),
+                        Icon(Icons.auto_awesome, color: ColorPalette.textDark, size: 28),
                         SizedBox(width: 10),
                         Text(
-                          'Yapay Zeka ile Kelime Üret',
-                          style: TextStyle(color: _kText, fontSize: 20, fontWeight: FontWeight.bold),
+                          'YAPAY ZEKA',
+                          style: TextStyle(color: ColorPalette.textDark, fontSize: 24, fontWeight: FontWeight.w900),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Seçili seviye için toplu kelime üretilir ve havuzunuza kaydedilir.',
-                      style: TextStyle(color: _kSubtext, fontSize: 13),
-                    ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
 
-                    const Text('Seviye', style: TextStyle(color: _kSubtext, fontSize: 13)),
-                    const SizedBox(height: 6),
+                    const Text('SEVİYE', style: TextStyle(color: ColorPalette.textDark, fontSize: 16, fontWeight: FontWeight.w900)),
+                    const SizedBox(height: 12),
                     Row(
                       children: ['A1', 'A2', 'B1'].map((lvl) {
                         final selected = level == lvl;
                         return Padding(
-                          padding: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.only(right: 12),
                           child: GestureDetector(
                             onTap: () => setSheetState(() => level = lvl),
                             child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                              duration: const Duration(milliseconds: 150),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                               decoration: BoxDecoration(
                                 color: selected ? _kAccent : _kCard,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: selected ? _kAccent : Colors.white12),
+                                border: Border.all(color: ColorPalette.textDark, width: 3),
+                                boxShadow: selected ? const [BoxShadow(color: ColorPalette.textDark, offset: Offset(4, 4))] : [],
                               ),
                               child: Text(
                                 lvl,
                                 style: TextStyle(
-                                  color: selected ? Colors.white : _kSubtext,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 20),
-
-                    const Text(
-                      'Özel Kategori / Konu (İsteğe Bağlı)',
-                      style: TextStyle(color: _kSubtext, fontSize: 13),
-                    ),
-                    const SizedBox(height: 6),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: _kCard,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: ColorPalette.secondary.withValues(alpha: 0.3)),
-                      ),
-                      child: TextField(
-                        controller: topicController,
-                        style: const TextStyle(color: _kText),
-                        decoration: const InputDecoration(
-                          hintText: 'Örn: Ev eşyaları, Mutfak araçları, Spor...',
-                          hintStyle: TextStyle(color: Colors.white24),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          border: InputBorder.none,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: suggestions.map((sug) {
-                        return ActionChip(
-                          backgroundColor: _kCard,
-                          side: const BorderSide(color: Colors.white12),
-                          label: Text(sug, style: const TextStyle(color: _kSubtext, fontSize: 12)),
-                          onPressed: () {
-                            setSheetState(() {
-                              topicController.text = sug;
-                            });
-                          },
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 20),
-
-                    const Text('Üretilecek Kelime Sayısı', style: TextStyle(color: _kSubtext, fontSize: 13)),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [10, 20, 50].map((count) {
-                        final selected = selectedCount == count;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: GestureDetector(
-                            onTap: () => setSheetState(() => selectedCount = count),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: selected ? ColorPalette.secondary : _kCard,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: selected ? ColorPalette.secondary : Colors.white12,
-                                ),
-                              ),
-                              child: Text(
-                                '$count kelime',
-                                style: TextStyle(
-                                  color: selected ? Colors.white : _kSubtext,
-                                  fontWeight: FontWeight.bold,
+                                  color: ColorPalette.textDark,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 18,
                                 ),
                               ),
                             ),
@@ -389,19 +317,91 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
                     ),
                     const SizedBox(height: 24),
 
+                    const Text(
+                      'KONU (İSTEĞE BAĞLI)',
+                      style: TextStyle(color: ColorPalette.textDark, fontSize: 16, fontWeight: FontWeight.w900),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: _kCard,
+                        border: Border.all(color: ColorPalette.textDark, width: 3),
+                      ),
+                      child: TextField(
+                        controller: topicController,
+                        style: const TextStyle(color: ColorPalette.textDark, fontWeight: FontWeight.bold, fontSize: 16),
+                        decoration: const InputDecoration(
+                          hintText: 'Örn: Spor, Yemek...',
+                          hintStyle: TextStyle(color: Colors.black38),
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          border: InputBorder.none,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: suggestions.map((sug) {
+                        return GestureDetector(
+                          onTap: () {
+                            setSheetState(() {
+                              topicController.text = sug;
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: ColorPalette.surface,
+                              border: Border.all(color: ColorPalette.textDark, width: 2),
+                            ),
+                            child: Text(sug.toUpperCase(), style: const TextStyle(color: ColorPalette.textDark, fontWeight: FontWeight.w900, fontSize: 14)),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 32),
+
+                    const Text('KELİME SAYISI', style: TextStyle(color: ColorPalette.textDark, fontSize: 16, fontWeight: FontWeight.w900)),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [10, 20, 50].map((count) {
+                        final selected = selectedCount == count;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 12),
+                          child: GestureDetector(
+                            onTap: () => setSheetState(() => selectedCount = count),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              decoration: BoxDecoration(
+                                color: selected ? ColorPalette.secondary : _kCard,
+                                border: Border.all(color: ColorPalette.textDark, width: 3),
+                                boxShadow: selected ? const [BoxShadow(color: ColorPalette.textDark, offset: Offset(4, 4))] : [],
+                              ),
+                              child: Text(
+                                '$count',
+                                style: TextStyle(
+                                  color: ColorPalette.textDark,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 32),
+
                     SizedBox(
                       width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: ColorPalette.secondary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        icon: const Icon(Icons.auto_awesome, color: Colors.white),
-                        label: Text(
-                          '$selectedCount Kelime Üret ($level)',
-                          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
+                      child: NeoBrutalistButton(
+                        backgroundColor: ColorPalette.secondary,
+                        foregroundColor: ColorPalette.textDark,
+                        icon: const Icon(Icons.auto_awesome, color: ColorPalette.textDark),
+                        label: 'ÜRET',
                         onPressed: () async {
                           final messenger = ScaffoldMessenger.of(context);
                           Navigator.pop(context);
@@ -419,14 +419,14 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
                             if (result.status == LexiconGenerationStatus.success) {
                               messenger.showSnackBar(
                                 SnackBar(
-                                  content: Text('✅ ${result.generatedCount} kelime başarıyla eklendi!'),
+                                  content: Text('✅ ${result.generatedCount} KELİME EKLENDİ!', style: const TextStyle(fontWeight: FontWeight.w900)),
                                   backgroundColor: _kSuccess,
                                 ),
                               );
                             } else if (result.status == LexiconGenerationStatus.error) {
                               messenger.showSnackBar(
                                 SnackBar(
-                                  content: Text('❌ ${result.error}'),
+                                  content: Text('❌ ${result.error}', style: const TextStyle(fontWeight: FontWeight.w900)),
                                   backgroundColor: _kDanger,
                                 ),
                               );
@@ -437,7 +437,7 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
                         },
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
                   ],
                 ),
               ),
@@ -457,7 +457,8 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
       isScrollControlled: true,
       backgroundColor: _kBg,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.zero,
+        side: BorderSide(color: ColorPalette.textDark, width: 4),
       ),
       builder: (context) {
         return StatefulBuilder(
@@ -474,73 +475,70 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Yeni Özel Kelime Ekle',
+                    'YENİ KELİME',
                     style: TextStyle(
-                      color: _kText,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+                      color: ColorPalette.textDark,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
-                  const Text('İngilizce Kelime', style: TextStyle(color: _kSubtext, fontSize: 13)),
-                  const SizedBox(height: 6),
+                  const Text('İNGİLİZCE KELİME', style: TextStyle(color: ColorPalette.textDark, fontSize: 16, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 12),
                   Container(
                     decoration: BoxDecoration(
                       color: _kCard,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.white12),
+                      border: Border.all(color: ColorPalette.textDark, width: 3),
                     ),
                     child: TextField(
                       controller: _wordController,
-                      style: const TextStyle(color: _kText, fontWeight: FontWeight.bold),
+                      style: const TextStyle(color: ColorPalette.textDark, fontWeight: FontWeight.w900, fontSize: 18),
                       textCapitalization: TextCapitalization.characters,
                       decoration: const InputDecoration(
-                        hintText: 'Örn: APPLE',
-                        hintStyle: TextStyle(color: Colors.white24),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        hintText: 'ÖRN: APPLE',
+                        hintStyle: TextStyle(color: Colors.black38),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                         border: InputBorder.none,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
 
-                  const Text('Türkçe Çengel Bulmaca İpucu', style: TextStyle(color: _kSubtext, fontSize: 13)),
-                  const SizedBox(height: 6),
+                  const Text('TÜRKÇE İPUCU', style: TextStyle(color: ColorPalette.textDark, fontSize: 16, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 12),
                   Container(
                     decoration: BoxDecoration(
                       color: _kCard,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.white12),
+                      border: Border.all(color: ColorPalette.textDark, width: 3),
                     ),
                     child: TextField(
                       controller: _clueController,
-                      style: const TextStyle(color: _kText),
+                      style: const TextStyle(color: ColorPalette.textDark, fontWeight: FontWeight.bold, fontSize: 16),
                       decoration: const InputDecoration(
-                        hintText: 'Örn: Kırmızı veya yeşil, tatlı bir meyve',
-                        hintStyle: TextStyle(color: Colors.white24),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        hintText: 'ÖRN: KIRMIZI BİR MEYVE',
+                        hintStyle: TextStyle(color: Colors.black38),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                         border: InputBorder.none,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
 
-                  const Text('İngilizce Seviyesi', style: TextStyle(color: _kSubtext, fontSize: 13)),
-                  const SizedBox(height: 6),
+                  const Text('SEVİYE', style: TextStyle(color: ColorPalette.textDark, fontSize: 16, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: _kCard,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.white12),
+                      border: Border.all(color: ColorPalette.textDark, width: 3),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _selectedLevel,
                         dropdownColor: _kCard,
-                        style: const TextStyle(color: _kText, fontWeight: FontWeight.bold, fontSize: 16),
-                        icon: const Icon(Icons.arrow_drop_down, color: _kText),
+                        style: const TextStyle(color: ColorPalette.textDark, fontWeight: FontWeight.w900, fontSize: 18),
+                        icon: const Icon(Icons.arrow_drop_down, color: ColorPalette.textDark, size: 32),
                         isExpanded: true,
                         items: _levels.map((String val) {
                           return DropdownMenuItem<String>(
@@ -562,16 +560,14 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
 
                   SizedBox(
                     width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _kAccent,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
+                    child: NeoBrutalistButton(
+                      backgroundColor: _kAccent,
+                      foregroundColor: ColorPalette.textDark,
+                      label: 'EKLE',
                       onPressed: () async {
                         final word = _wordController.text.trim().toUpperCase();
                         final clue = _clueController.text.trim();
@@ -579,7 +575,7 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
                         if (word.isEmpty || clue.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('⚠️ Lütfen kelime ve ipucu alanlarını doldurun.'),
+                              content: Text('⚠️ BOŞ ALAN BIRAKMAYIN.', style: TextStyle(fontWeight: FontWeight.w900)),
                               backgroundColor: _kDanger,
                             ),
                           );
@@ -589,7 +585,7 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
                         if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(word)) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('⚠️ Kelime sadece İngilizce harflerden oluşmalıdır.'),
+                              content: Text('⚠️ SADECE İNGİLİZCE HARF.', style: TextStyle(fontWeight: FontWeight.w900)),
                               backgroundColor: _kDanger,
                             ),
                           );
@@ -603,20 +599,16 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('🎉 "$word" başarıyla eklendi!'),
+                              content: Text('🎉 "$word" EKLENDİ!', style: const TextStyle(fontWeight: FontWeight.w900)),
                               backgroundColor: _kSuccess,
                             ),
                           );
                         }
                         _refresh();
                       },
-                      child: const Text(
-                        'Kelimeyi Ekle',
-                        style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
                 ],
               ),
             );

@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
-import '../../../core/widgets/animated_background.dart';
-import '../../../core/widgets/glassmorphic_card.dart';
 import '../../../core/theme/color_palette.dart';
-
+import '../../../core/widgets/neo_brutalist_card.dart';
+import '../../../core/widgets/neo_brutalist_button.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/command_center_state.dart';
 import '../../../core/services/word_vault_manager.dart';
 import '../../vocabulary_studio/view/vocabulary_studio_view.dart';
 
 const _kBg = ColorPalette.background;
-const _kCard = ColorPalette.surface;
 const _kAccent = ColorPalette.primary;
-const _kText = ColorPalette.textPrimary;
-const _kSubtext = ColorPalette.textSecondary;
 
 class ControlPanelView extends ConsumerStatefulWidget {
   const ControlPanelView({super.key});
@@ -49,201 +45,201 @@ class _ControlPanelViewState extends ConsumerState<ControlPanelView> {
     final notifier = ref.read(commandCenterProvider.notifier);
 
     return Scaffold(
-      backgroundColor: Colors.transparent, // Background handled by AnimatedBackground
-      extendBodyBehindAppBar: true,
+      backgroundColor: _kBg,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        title: FadeInDown(child: const Text('Ayarlar', style: TextStyle(color: _kText, fontWeight: FontWeight.bold))),
+        backgroundColor: _kBg,
+        elevation: 0,
+        title: FadeInDown(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: ColorPalette.tertiary,
+              border: Border.all(color: ColorPalette.textDark, width: 3),
+              boxShadow: const [
+                BoxShadow(color: ColorPalette.textDark, offset: Offset(4, 4))
+              ],
+            ),
+            child: const Text('AYARLAR',
+                style: TextStyle(color: ColorPalette.textDark, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
+          ),
+        ),
         leading: FadeInLeft(
           child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: _kText),
+            icon: const Icon(Icons.arrow_back, color: ColorPalette.textDark, size: 32),
             onPressed: () => Navigator.pop(context),
           ),
         ),
       ),
-      body: AnimatedBackground(
-        child: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              const SizedBox(height: 24),
-              FadeInUp(
-                duration: const Duration(milliseconds: 400),
-                child: _SectionHeader('Ollama Sunucu Ayarları'),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.all(24),
+          children: [
+            const SizedBox(height: 24),
+            FadeInUp(
+              duration: const Duration(milliseconds: 400),
+              child: const _SectionHeader('OLLAMA SUNUCU AYARLARI'),
+            ),
+            const SizedBox(height: 8),
+            FadeInUp(
+              duration: const Duration(milliseconds: 500),
+              child: const Text(
+                'Ollama\'yı bilgisayarınızda çalıştırın. Telefon aynı Wi-Fi\'ye bağlı olmalı.',
+                style: TextStyle(color: ColorPalette.textDark, fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 8),
-              FadeInUp(
-                duration: const Duration(milliseconds: 500),
-                child: const Text(
-                  'Ollama\'yı bilgisayarınızda veya yerel ağınızda çalıştırın. Telefon aynı Wi-Fi\'ye bağlı olmalı.',
-                  style: TextStyle(color: _kSubtext, fontSize: 13),
-                ),
-              ),
-              const SizedBox(height: 12),
-              FadeInUp(
-                duration: const Duration(milliseconds: 600),
-                child: GlassmorphicCard(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    children: [
-                      _InputField(
-                        label: 'Sunucu Adresi',
-                        controller: _ollamaUrlController,
-                        hint: 'http://192.168.1.100:11434',
-                      ),
-                      const SizedBox(height: 16),
-                      _InputField(
-                        label: 'Model Adı',
-                        controller: _ollamaModelController,
-                        hint: 'llama3 / mistral / gemma3',
-                      ),
-                      const SizedBox(height: 20),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _kAccent,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            elevation: 10,
-                            shadowColor: _kAccent.withValues(alpha: 0.6),
-                          ),
-                          icon: const Icon(Icons.save, color: Colors.white),
-                          label: const Text('Ollama Ayarlarını Kaydet', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                          onPressed: () async {
-                            await notifier.setOllamaConfig(
-                              url: _ollamaUrlController.text.trim(),
-                              model: _ollamaModelController.text.trim(),
+            ),
+            const SizedBox(height: 16),
+            FadeInUp(
+              duration: const Duration(milliseconds: 600),
+              child: NeoBrutalistCard(
+                color: ColorPalette.surface,
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    _InputField(
+                      label: 'SUNUCU ADRESİ',
+                      controller: _ollamaUrlController,
+                      hint: 'http://192.168.1.100:11434',
+                    ),
+                    const SizedBox(height: 24),
+                    _InputField(
+                      label: 'MODEL ADI',
+                      controller: _ollamaModelController,
+                      hint: 'llama3 / mistral / gemma3',
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      child: NeoBrutalistButton(
+                        backgroundColor: _kAccent,
+                        foregroundColor: ColorPalette.surface,
+                        icon: const Icon(Icons.save, color: ColorPalette.surface),
+                        label: 'AYARLARI KAYDET',
+                        onPressed: () async {
+                          await notifier.setOllamaConfig(
+                            url: _ollamaUrlController.text.trim(),
+                            model: _ollamaModelController.text.trim(),
+                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('✅ OLLAMA AYARLARI KAYDEDİLDİ', style: TextStyle(fontWeight: FontWeight.w900)),
+                                backgroundColor: ColorPalette.success,
+                              ),
                             );
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('✅ Ollama ayarları kaydedildi'),
-                                  backgroundColor: ColorPalette.success,
-                                ),
-                              );
-                            }
-                          },
-                        ),
+                          }
+                        },
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 32),
+            ),
+            const SizedBox(height: 48),
 
-              // ─── Mevcut Durum ────────────────────────────────────────────────
-              FadeInUp(
-                duration: const Duration(milliseconds: 700),
-                child: _SectionHeader('Mevcut Durum'),
-              ),
-              const SizedBox(height: 12),
-              FadeInUp(
-                duration: const Duration(milliseconds: 800),
-                child: GlassmorphicCard(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.dns,
-                        color: _kAccent,
-                        size: 28,
+            // ─── Mevcut Durum ────────────────────────────────────────────────
+            FadeInUp(
+              duration: const Duration(milliseconds: 700),
+              child: const _SectionHeader('MEVCUT DURUM'),
+            ),
+            const SizedBox(height: 16),
+            FadeInUp(
+              duration: const Duration(milliseconds: 800),
+              child: NeoBrutalistCard(
+                color: ColorPalette.surface,
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.dns,
+                      color: ColorPalette.textDark,
+                      size: 40,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'OLLAMA AKTİF',
+                            style: TextStyle(color: ColorPalette.textDark, fontWeight: FontWeight.w900, fontSize: 18),
+                          ),
+                          Text(
+                            '${settings.ollamaUrl} — ${settings.ollamaModel}',
+                            style: const TextStyle(color: ColorPalette.textDark, fontSize: 14, fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Ollama aktif',
-                              style: TextStyle(color: _kText, fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              '${settings.ollamaUrl} — ${settings.ollamaModel}',
-                              style: const TextStyle(color: _kSubtext, fontSize: 13),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 24),
-              FadeInUp(
-                duration: const Duration(milliseconds: 900),
-                child: _SectionHeader('İlerleme ve Veri'),
-              ),
-              const SizedBox(height: 12),
-              FadeInUp(
-                duration: const Duration(milliseconds: 1000),
-                child: GlassmorphicCard(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Özel Kelimelerim 📝',
-                        style: TextStyle(color: _kText, fontWeight: FontWeight.bold, fontSize: 15),
-                      ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Bulmacaya kendiniz özel kelimeler ve ipuçları ekleyebilir, silebilir veya düzenleyebilirsiniz.',
-                        style: TextStyle(color: _kSubtext, fontSize: 13),
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _kAccent,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            elevation: 8,
-                            shadowColor: _kAccent.withValues(alpha: 0.5),
-                          ),
-                          icon: const Icon(Icons.edit_note, color: Colors.white),
-                          label: const Text('Özel Kelimeleri Düzenle', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                          onPressed: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const VocabularyStudioView()),
-                          ),
+            ),
+            const SizedBox(height: 48),
+            FadeInUp(
+              duration: const Duration(milliseconds: 900),
+              child: const _SectionHeader('İLERLEME VE VERİ'),
+            ),
+            const SizedBox(height: 16),
+            FadeInUp(
+              duration: const Duration(milliseconds: 1000),
+              child: NeoBrutalistCard(
+                color: ColorPalette.surface,
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'ÖZEL KELİMELERİM 📝',
+                      style: TextStyle(color: ColorPalette.textDark, fontWeight: FontWeight.w900, fontSize: 18),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Bulmacaya kendiniz özel kelimeler ve ipuçları ekleyebilir, silebilir veya düzenleyebilirsiniz.',
+                      style: TextStyle(color: ColorPalette.textDark, fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: NeoBrutalistButton(
+                        backgroundColor: ColorPalette.secondary,
+                        foregroundColor: ColorPalette.textDark,
+                        icon: const Icon(Icons.edit_note, color: ColorPalette.textDark),
+                        label: 'DÜZENLE',
+                        onPressed: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const VocabularyStudioView()),
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      const Divider(color: Colors.white10, height: 1),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Öğrenilmiş Kelimeler 🧠',
-                        style: TextStyle(color: _kText, fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                    const SizedBox(height: 32),
+                    Container(height: 3, color: ColorPalette.textDark),
+                    const SizedBox(height: 32),
+                    const Text(
+                      'ÖĞRENİLMİŞ KELİMELER 🧠',
+                      style: TextStyle(color: ColorPalette.textDark, fontWeight: FontWeight.w900, fontSize: 18),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Daha önce doğru bildiğiniz kelimelerin listesini sıfırlayarak aynı kelimelerin tekrar karşınıza çıkmasını sağlayabilirsiniz.',
+                      style: TextStyle(color: ColorPalette.textDark, fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: NeoBrutalistButton(
+                        backgroundColor: ColorPalette.error,
+                        foregroundColor: ColorPalette.surface,
+                        icon: const Icon(Icons.delete_sweep, color: ColorPalette.surface),
+                        label: 'VERİLERİ SIFIRLA',
+                        onPressed: () => _showResetConfirmation(context, ref),
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Daha önce doğru bildiğiniz kelimelerin listesini sıfırlayarak aynı kelimelerin tekrar karşınıza çıkmasını sağlayabilirsiniz.',
-                        style: TextStyle(color: _kSubtext, fontSize: 13),
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: ColorPalette.error,
-                            side: const BorderSide(color: ColorPalette.error),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                          icon: const Icon(Icons.delete_sweep),
-                          label: const Text('Öğrenilen Kelimeleri Sıfırla', style: TextStyle(fontWeight: FontWeight.bold)),
-                          onPressed: () => _showResetConfirmation(context, ref),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 32),
-            ],
-          ),
+            ),
+            const SizedBox(height: 32),
+          ],
         ),
       ),
     );
@@ -254,15 +250,19 @@ class _ControlPanelViewState extends ConsumerState<ControlPanelView> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: _kBg,
-        title: const Text('Verileri Sıfırla', style: TextStyle(color: _kText)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+          side: const BorderSide(color: ColorPalette.textDark, width: 4),
+        ),
+        title: const Text('VERİLERİ SIFIRLA', style: TextStyle(color: ColorPalette.textDark, fontWeight: FontWeight.w900)),
         content: const Text(
           'Daha önce öğrendiğiniz tüm kelimeler sıfırlanacaktır. Bu işlem geri alınamaz. Emin misiniz?',
-          style: TextStyle(color: _kSubtext),
+          style: TextStyle(color: ColorPalette.textDark, fontWeight: FontWeight.bold, fontSize: 16),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('İptal', style: TextStyle(color: _kSubtext)),
+            child: const Text('İPTAL', style: TextStyle(color: ColorPalette.textDark, fontWeight: FontWeight.w900)),
           ),
           TextButton(
             onPressed: () async {
@@ -272,13 +272,13 @@ class _ControlPanelViewState extends ConsumerState<ControlPanelView> {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('✅ Tüm kelime verileri başarıyla sıfırlandı!'),
+                    content: Text('✅ TÜM VERİLER SIFIRLANDI!', style: TextStyle(fontWeight: FontWeight.w900)),
                     backgroundColor: ColorPalette.success,
                   ),
                 );
               }
             },
-            child: const Text('Evet, Sıfırla', style: TextStyle(color: Colors.redAccent)),
+            child: const Text('EVET, SIFIRLA', style: TextStyle(color: ColorPalette.error, fontWeight: FontWeight.w900)),
           ),
         ],
       ),
@@ -292,13 +292,20 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text.toUpperCase(),
-      style: const TextStyle(
-        color: _kAccent,
-        fontSize: 12,
-        fontWeight: FontWeight.bold,
-        letterSpacing: 1.5,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: ColorPalette.textDark,
+        borderRadius: BorderRadius.circular(0),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: ColorPalette.surface,
+          fontSize: 16,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 2.0,
+        ),
       ),
     );
   }
@@ -321,21 +328,21 @@ class _InputField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: _kSubtext, fontSize: 13)),
-        const SizedBox(height: 6),
+        Text(label, style: const TextStyle(color: ColorPalette.textDark, fontSize: 16, fontWeight: FontWeight.w900)),
+        const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: _kCard,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: _kAccent.withValues(alpha: 0.3)),
+            color: ColorPalette.surface,
+            border: Border.all(color: ColorPalette.textDark, width: 3),
+            boxShadow: const [BoxShadow(color: ColorPalette.textDark, offset: Offset(4, 4))],
           ),
           child: TextField(
             controller: controller,
-            style: const TextStyle(color: _kText),
+            style: const TextStyle(color: ColorPalette.textDark, fontWeight: FontWeight.w900, fontSize: 16),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: const TextStyle(color: _kSubtext),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              hintStyle: const TextStyle(color: Colors.black38),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               border: InputBorder.none,
             ),
           ),
@@ -344,3 +351,4 @@ class _InputField extends StatelessWidget {
     );
   }
 }
+

@@ -1,292 +1,236 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
-import '../../../core/widgets/animated_background.dart';
-import '../../../core/widgets/glassmorphic_card.dart';
 import '../../../core/theme/color_palette.dart';
-
+import '../../../core/widgets/neo_brutalist_card.dart';
+import '../../../core/widgets/neo_brutalist_button.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/command_center_state.dart';
 import '../../crossword_arena/view/crossword_arena_view.dart';
 import '../../control_panel/view/control_panel_view.dart';
 import '../../vocabulary_studio/view/vocabulary_studio_view.dart';
 
-
-const _kAccent = ColorPalette.primary;
-const _kText = ColorPalette.textPrimary;
-const _kSubtext = ColorPalette.textSecondary;
-
-class StagePickerView extends ConsumerWidget {
+class StagePickerView extends ConsumerStatefulWidget {
   const StagePickerView({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StagePickerView> createState() => _StagePickerViewState();
+}
+
+class _StagePickerViewState extends ConsumerState<StagePickerView> {
+  final PageController _pageController = PageController(viewportFraction: 0.85);
+
+  final List<Map<String, dynamic>> _stages = [
+    {
+      'level': 'A1',
+      'title': 'BEGINNER',
+      'desc': 'Start your journey here.',
+      'color': ColorPalette.success,
+      'icon': Icons.rocket_launch,
+    },
+    {
+      'level': 'A2',
+      'title': 'ELEMENTARY',
+      'desc': 'Step up your game.',
+      'color': ColorPalette.tertiary,
+      'icon': Icons.flash_on,
+    },
+    {
+      'level': 'B1',
+      'title': 'INTERMEDIATE',
+      'desc': 'Things get heated.',
+      'color': ColorPalette.primary,
+      'icon': Icons.local_fire_department,
+    },
+  ];
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final settings = ref.watch(commandCenterProvider);
 
     return Scaffold(
-      backgroundColor: Colors.transparent, // Handled by AnimatedBackground
-      extendBodyBehindAppBar: true,
+      backgroundColor: ColorPalette.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: ColorPalette.background,
         elevation: 0,
         title: FadeInDown(
-          child: const Text('RealEnglish',
-              style: TextStyle(color: _kText, fontWeight: FontWeight.bold, fontSize: 22, letterSpacing: 2)),
-        ),
-        actions: [
-          // Aktif AI motoru göstergesi
-          FadeInRight(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Chip(
-                backgroundColor: _kAccent.withValues(alpha: 0.2),
-                side: BorderSide(color: _kAccent.withValues(alpha: 0.5)),
-                avatar: const Icon(
-                  Icons.phone_android,
-                  color: _kAccent,
-                  size: 16,
-                ),
-                label: const Text(
-                  'Ollama',
-                  style: TextStyle(color: _kAccent, fontSize: 12),
-                ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: ColorPalette.surface,
+              border: Border.all(color: ColorPalette.textDark, width: 3),
+              boxShadow: const [
+                BoxShadow(color: ColorPalette.textDark, offset: Offset(4, 4))
+              ],
+            ),
+            child: const Text(
+              'REAL ENGLISH',
+              style: TextStyle(
+                color: ColorPalette.textDark,
+                fontWeight: FontWeight.w900,
+                fontSize: 22,
+                letterSpacing: 2,
               ),
             ),
           ),
-          // Kelimelerim
+        ),
+        actions: [
           FadeInRight(
-            delay: const Duration(milliseconds: 100),
             child: IconButton(
-              icon: const Icon(Icons.book, color: _kText),
-              tooltip: 'Kelimelerim 📝',
+              icon: const Icon(Icons.book, color: ColorPalette.textDark, size: 32),
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const VocabularyStudioView()),
               ),
             ),
           ),
-          // Ayarlar
           FadeInRight(
-            delay: const Duration(milliseconds: 200),
+            delay: const Duration(milliseconds: 100),
             child: IconButton(
-              icon: const Icon(Icons.settings, color: _kText),
+              icon: const Icon(Icons.settings, color: ColorPalette.textDark, size: 32),
               onPressed: () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const ControlPanelView()),
               ),
             ),
           ),
+          const SizedBox(width: 8),
         ],
       ),
-      body: AnimatedBackground(
-        child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo / İkon
-                  ZoomIn(
-                    duration: const Duration(milliseconds: 800),
-                    child: Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: _kAccent.withValues(alpha: 0.3),
-                            blurRadius: 30,
-                            spreadRadius: 5,
-                          ),
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 24),
+            // User Stats
+            FadeInUp(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: NeoBrutalistCard(
+                  color: ColorPalette.secondary,
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('YOUR STATS', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                          const SizedBox(height: 8),
+                          Text('LVL ${settings.level}', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 32)),
                         ],
-                        gradient: RadialGradient(
-                          colors: [_kAccent.withValues(alpha: 0.6), Colors.transparent],
-                          stops: const [0.3, 1.0],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: ColorPalette.surface,
+                          border: Border.all(color: ColorPalette.textDark, width: 3),
+                        ),
+                        child: Text(
+                          '${settings.xp} XP',
+                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 20),
                         ),
                       ),
-                      child: const Center(
-                        child: Icon(Icons.grid_view_rounded, size: 64, color: _kAccent),
-                      ),
-                    ),
+                    ],
                   ),
-                  const SizedBox(height: 24),
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 200),
-                    child: const Text('İngilizce Seviyeni Seç',
-                        style: TextStyle(color: _kText, fontSize: 24, fontWeight: FontWeight.bold)),
-                  ),
-                  const SizedBox(height: 8),
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 300),
-                    child: const Text(
-                      'AI destekli çengel bulmacayla İngilizce öğren',
-                      style: TextStyle(color: _kSubtext, fontSize: 14),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Gamification Card (XP, Seviye, Streak)
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 400),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: GlassmorphicCard(
-                        padding: const EdgeInsets.all(20),
+                ),
+              ),
+            ),
+            const SizedBox(height: 40),
+            
+            // Carousel
+            Expanded(
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: _stages.length,
+                itemBuilder: (context, index) {
+                  final stage = _stages[index];
+                  return FadeInUp(
+                    delay: Duration(milliseconds: 200 + (index * 100)),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 24),
+                      child: NeoBrutalistCard(
+                        color: stage['color'],
+                        padding: const EdgeInsets.all(24),
                         child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                // Seviye
-                                Row(
-                                  children: [
-                                    const Icon(Icons.stars, color: Colors.amber, size: 28),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      'Seviye ${settings.level}',
-                                      style: const TextStyle(
-                                        color: _kText,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 18,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                // Günlük Seri (Streak)
-                                if (settings.streakCount > 0)
-                                  Row(
-                                    children: [
-                                      Text(
-                                        '${settings.streakCount} Gün',
-                                        style: const TextStyle(
-                                          color: Colors.orangeAccent,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 4),
-                                      const Text('🔥', style: TextStyle(fontSize: 22)),
-                                    ],
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: ColorPalette.surface,
+                                    border: Border.all(color: ColorPalette.textDark, width: 3),
                                   ),
+                                  child: Icon(stage['icon'], size: 48, color: ColorPalette.textDark),
+                                ),
+                                Text(
+                                  stage['level'],
+                                  style: const TextStyle(
+                                    fontSize: 64,
+                                    fontWeight: FontWeight.w900,
+                                    color: ColorPalette.textDark,
+                                  ),
+                                ),
                               ],
                             ),
-                            const SizedBox(height: 20),
-                            // XP Bar
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  '${settings.xp % 100}/100 XP',
-                                  style: const TextStyle(color: _kSubtext, fontSize: 13, fontWeight: FontWeight.bold),
+                                  stage['title'],
+                                  style: const TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.w900,
+                                    color: ColorPalette.textDark,
+                                    height: 1.1,
+                                  ),
                                 ),
+                                const SizedBox(height: 8),
                                 Text(
-                                  'Toplam: ${settings.xp} XP',
-                                  style: const TextStyle(color: _kSubtext, fontSize: 13, fontWeight: FontWeight.bold),
+                                  stage['desc'],
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: ColorPalette.textDark,
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: NeoBrutalistButton(
+                                    label: 'PLAY NOW',
+                                    backgroundColor: ColorPalette.surface,
+                                    foregroundColor: ColorPalette.textDark,
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => CrosswordArenaView(level: stage['level']),
+                                        ),
+                                      );
+                                    },
+                                  ),
                                 ),
                               ],
-                            ),
-                            const SizedBox(height: 8),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(6),
-                              child: LinearProgressIndicator(
-                                value: (settings.xp % 100) / 100,
-                                backgroundColor: Colors.white10,
-                                valueColor: const AlwaysStoppedAnimation<Color>(_kAccent),
-                                minHeight: 10,
-                              ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                  ),
-
-                  const SizedBox(height: 36),
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 500),
-                    child: const _StageButton(
-                        level: 'A1',
-                        description: 'Başlangıç',
-                        emoji: '🌱',
-                        color: ColorPalette.success),
-                  ),
-                  const SizedBox(height: 16),
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 600),
-                    child: const _StageButton(
-                        level: 'A2',
-                        description: 'Temel',
-                        emoji: '🌿',
-                        color: ColorPalette.warning),
-                  ),
-                  const SizedBox(height: 16),
-                  FadeInUp(
-                    delay: const Duration(milliseconds: 700),
-                    child: const _StageButton(
-                        level: 'B1',
-                        description: 'Orta',
-                        emoji: '🔥',
-                        color: ColorPalette.error),
-                  ),
-                ],
+                  );
+                },
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _StageButton extends StatelessWidget {
-  final String level;
-  final String description;
-  final String emoji;
-  final Color color;
-
-  const _StageButton({
-    required this.level,
-    required this.description,
-    required this.emoji,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GlassmorphicCard(
-      padding: EdgeInsets.zero,
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CrosswordArenaView(level: level),
-          ),
-        );
-      },
-      child: Container(
-        width: double.infinity,
-        height: 74,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1),
-          border: Border.all(color: color.withValues(alpha: 0.5), width: 1.5),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 28)),
-            Row(
-              children: [
-                Text(level,
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
-                const SizedBox(width: 16),
-                Text(description, style: const TextStyle(fontSize: 18, color: ColorPalette.textSecondary)),
-              ],
-            ),
-            Icon(Icons.arrow_forward_ios, color: color, size: 20),
+            const SizedBox(height: 32),
           ],
         ),
       ),
