@@ -8,7 +8,7 @@
 PRODUCT_NAME = aienglish_cengel_bulmaca
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.realenglish.crossword.adventure
+PRODUCT_BUNDLE_IDENTIFIER = com.aienglish.aienglishCengelBulmaca
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 com.realenglish. All rights reserved.

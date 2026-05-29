@@ -1,4 +1,4 @@
-package com.realenglish.crossword.adventure
+package com.aienglish.aienglish_cengel_bulmaca
 
 import io.flutter.embedding.android.FlutterActivity
 
