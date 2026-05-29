@@ -1,10 +1,10 @@
-class CrosswordCell {
+class ArenaCell {
   final int x, y;
-  final String char; // Doğru cevap
+  final String char;
   final bool isBlank;
   final int? number;
 
-  const CrosswordCell({
+  const ArenaCell({
     required this.x,
     required this.y,
     this.char = '',
@@ -13,7 +13,6 @@ class CrosswordCell {
   });
 }
 
-/// Bir kelimenin grid üzerindeki konumunu ve hücrelerini tanımlar.
 class WordPlacement {
   final String word;
   final String clue;
@@ -30,16 +29,12 @@ class WordPlacement {
     required this.number,
   });
 
-  /// Kelimenin kapladığı tüm (x, y) koordinatları
   List<({int x, int y})> get cells => List.generate(
         word.length,
-        (i) => horizontal
-            ? (x: x + i, y: y)
-            : (x: x, y: y + i),
+        (i) => horizontal ? (x: x + i, y: y) : (x: x, y: y + i),
       );
 
-  bool containsCell(int cx, int cy) =>
-      cells.any((c) => c.x == cx && c.y == cy);
+  bool containsCell(int cx, int cy) => cells.any((c) => c.x == cx && c.y == cy);
 
   int cellIndex(int cx, int cy) {
     final list = cells;
@@ -50,9 +45,8 @@ class WordPlacement {
   }
 }
 
-/// CrosswordGenerator'ın döndürdüğü sonuç
-class CrosswordResult {
-  final List<List<CrosswordCell>> grid;
+class CompilationResult {
+  final List<List<ArenaCell>> grid;
   final List<WordPlacement> placements;
-  const CrosswordResult(this.grid, this.placements);
+  const CompilationResult(this.grid, this.placements);
 }

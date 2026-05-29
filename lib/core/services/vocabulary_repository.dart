@@ -1,6 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:aienglish_cengel_bulmaca/features/game_board/domain/word_record.dart';
+import 'package:aienglish_cengel_bulmaca/features/crossword_arena/domain/word_record.dart';
 
 final vocabularyRepositoryProvider = Provider<VocabularyRepository>((ref) {
   throw UnimplementedError('Repository main.dart içinde başlatılmadı');

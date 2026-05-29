@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../domain/models.dart';
-import '../providers/game_provider.dart';
-import '../../custom_words/view/custom_words_screen.dart';
+import '../domain/arena_models.dart';
+import '../providers/arena_status_provider.dart';
+import '../../vocabulary_studio/view/vocabulary_studio_view.dart';
 import '../../../core/services/tts_service.dart';
 
-// ─── Renkler ────────────────────────────────────────────────────────────────
 
 const _kBg = Color(0xFF1A1A2E);
 const _kCellNormal = Color(0xFF2D2D44);
@@ -19,24 +18,22 @@ const _kAccent = Color(0xFF4A7FD4);
 const _kKeyBg = Color(0xFF252540);
 const _kKeyPressed = Color(0xFF4A7FD4);
 
-// ─── Ekran ──────────────────────────────────────────────────────────────────
-
-class GameBoardScreen extends ConsumerStatefulWidget {
+class CrosswordArenaView extends ConsumerStatefulWidget {
   final String level;
-  const GameBoardScreen({super.key, required this.level});
+  const CrosswordArenaView({super.key, required this.level});
 
   @override
-  ConsumerState<GameBoardScreen> createState() => _GameBoardScreenState();
+  ConsumerState<CrosswordArenaView> createState() => _CrosswordArenaViewState();
 }
 
-class _GameBoardScreenState extends ConsumerState<GameBoardScreen> {
+class _CrosswordArenaViewState extends ConsumerState<CrosswordArenaView> {
   final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(gameProvider.notifier).startGame(widget.level);
+      ref.read(arenaStatusProvider.notifier).startGame(widget.level);
       _focusNode.requestFocus();
     });
   }
@@ -49,14 +46,14 @@ class _GameBoardScreenState extends ConsumerState<GameBoardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final gameState = ref.watch(gameProvider);
+    final gameState = ref.watch(arenaStatusProvider);
 
     return KeyboardListener(
       focusNode: _focusNode,
       autofocus: true,
       onKeyEvent: (event) {
         if (event is! KeyDownEvent) return;
-        final notifier = ref.read(gameProvider.notifier);
+        final notifier = ref.read(arenaStatusProvider.notifier);
         if (event.logicalKey == LogicalKeyboardKey.backspace) {
           notifier.deleteLetter();
         } else {
@@ -91,7 +88,7 @@ class _GameBoardScreenState extends ConsumerState<GameBoardScreen> {
     );
   }
 
-  Widget _buildBody(GameState state) {
+  Widget _buildBody(ArenaStatusState state) {
     if (state.error != null) return _buildError(state);
     if (state.isDownloading) return _buildDownloading(state);
     if (state.isThinking) return _buildThinking();
@@ -99,9 +96,7 @@ class _GameBoardScreenState extends ConsumerState<GameBoardScreen> {
     return _buildGame(state);
   }
 
-  // ── Yükleme ekranları ──────────────────────────────────────────────────────
-
-  Widget _buildError(GameState state) {
+  Widget _buildError(ArenaStatusState state) {
     final isInsufficient = state.error!.startsWith('insufficient_words:');
 
     if (isInsufficient) {
@@ -145,7 +140,7 @@ class _GameBoardScreenState extends ConsumerState<GameBoardScreen> {
                   label: const Text('Kelimelerim\'e Git', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
                   onPressed: () => Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (_) => const CustomWordsScreen()),
+                    MaterialPageRoute(builder: (_) => const VocabularyStudioView()),
                   ),
                 ),
               ),
@@ -171,8 +166,7 @@ class _GameBoardScreenState extends ConsumerState<GameBoardScreen> {
               style: ElevatedButton.styleFrom(backgroundColor: _kAccent),
               icon: const Icon(Icons.refresh),
               label: const Text('Tekrar Dene'),
-              onPressed: () =>
-                  ref.read(gameProvider.notifier).startGame(widget.level),
+              onPressed: () => ref.read(arenaStatusProvider.notifier).startGame(widget.level),
             ),
           ],
         ),
@@ -180,17 +174,14 @@ class _GameBoardScreenState extends ConsumerState<GameBoardScreen> {
     );
   }
 
-  Widget _buildDownloading(GameState state) => Center(
+  Widget _buildDownloading(ArenaStatusState state) => Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.cloud_download, size: 72, color: _kAccent),
             const SizedBox(height: 24),
             const Text('Gemma 4 E2B Modeli İndiriliyor...',
-                style: TextStyle(
-                    color: _kTextNormal,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold)),
+                style: TextStyle(color: _kTextNormal, fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
             SizedBox(
                 width: 260,
@@ -200,8 +191,7 @@ class _GameBoardScreenState extends ConsumerState<GameBoardScreen> {
                     color: _kAccent)),
             const SizedBox(height: 12),
             Text('%${(state.downloadProgress * 100).toStringAsFixed(1)}',
-                style:
-                    const TextStyle(color: _kTextNormal, fontSize: 16)),
+                style: const TextStyle(color: _kTextNormal, fontSize: 16)),
           ],
         ),
       );
@@ -213,23 +203,15 @@ class _GameBoardScreenState extends ConsumerState<GameBoardScreen> {
             CircularProgressIndicator(color: _kAccent),
             SizedBox(height: 24),
             Text('Yapay Zeka Bulmaca Üretiyor...',
-                style: TextStyle(
-                    color: _kTextNormal,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold)),
+                style: TextStyle(color: _kTextNormal, fontSize: 18, fontWeight: FontWeight.bold)),
           ],
         ),
       );
 
-  // ── Oyun alanı ─────────────────────────────────────────────────────────────
-
-  Widget _buildGame(GameState state) {
+  Widget _buildGame(ArenaStatusState state) {
     return Column(
       children: [
-        // Tamamlanma banner
         if (state.isComplete) _buildCompleteBanner(),
-
-        // Grid
         Expanded(
           child: InteractiveViewer(
             constrained: false,
@@ -244,10 +226,10 @@ class _GameBoardScreenState extends ConsumerState<GameBoardScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: List.generate(10, (x) {
                     final cell = state.grid![y][x];
-                    return _CellWidget(
+                    return _ArenaCellWidget(
                       cell: cell,
                       gameState: state,
-                      onTap: () => ref.read(gameProvider.notifier).selectCell(x, y),
+                      onTap: () => ref.read(arenaStatusProvider.notifier).selectCell(x, y),
                     );
                   }),
                 )),
@@ -255,8 +237,6 @@ class _GameBoardScreenState extends ConsumerState<GameBoardScreen> {
             ),
           ),
         ),
-
-        // İpucu çubuğu + Klavye
         _buildBottomPanel(state),
       ],
     );
@@ -272,24 +252,18 @@ class _GameBoardScreenState extends ConsumerState<GameBoardScreen> {
             Icon(Icons.star, color: Colors.amber),
             SizedBox(width: 8),
             Text('Tebrikler! Bulmacayı Tamamladın! 🎉',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16)),
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
           ],
         ),
       );
 
-  Widget _buildBottomPanel(GameState state) {
+  Widget _buildBottomPanel(ArenaStatusState state) {
     final sel = state.selectedPlacementIndex;
-    final placement = sel != null && sel < state.placements.length
-        ? state.placements[sel]
-        : null;
+    final placement = sel != null && sel < state.placements.length ? state.placements[sel] : null;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // İpucu çubuğu
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -305,27 +279,20 @@ class _GameBoardScreenState extends ConsumerState<GameBoardScreen> {
                           children: [
                             TextSpan(
                               text: '${placement.number}. ',
-                              style: const TextStyle(
-                                  color: _kAccent,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15),
+                              style: const TextStyle(color: _kAccent, fontWeight: FontWeight.bold, fontSize: 15),
                             ),
                             TextSpan(
                               text: placement.clue,
-                              style: const TextStyle(
-                                  color: _kTextNormal, fontSize: 15),
+                              style: const TextStyle(color: _kTextNormal, fontSize: 15),
                             ),
                             TextSpan(
                               text: '  (${placement.word.length} harf)',
-                              style: const TextStyle(
-                                  color: Colors.white38, fontSize: 13),
+                              style: const TextStyle(color: Colors.white38, fontSize: 13),
                             ),
                           ],
                         ),
                       )
-                    : const Text('Bir kelimeye dokunun',
-                        style:
-                            TextStyle(color: Colors.white38, fontSize: 15)),
+                    : const Text('Bir kelimeye dokunun', style: TextStyle(color: Colors.white38, fontSize: 15)),
               ),
               if (placement != null) ...[
                 const SizedBox(width: 12),
@@ -333,7 +300,7 @@ class _GameBoardScreenState extends ConsumerState<GameBoardScreen> {
                   icon: const Icon(Icons.lightbulb, color: Colors.amber, size: 22),
                   onPressed: () async {
                     final messenger = ScaffoldMessenger.of(context);
-                    final error = await ref.read(gameProvider.notifier).useRevealLetterHint();
+                    final error = await ref.read(arenaStatusProvider.notifier).useRevealLetterHint();
                     if (error != null) {
                       messenger.showSnackBar(
                         SnackBar(
@@ -361,27 +328,22 @@ class _GameBoardScreenState extends ConsumerState<GameBoardScreen> {
             ],
           ),
         ),
-
-        // Klavye
         if (placement != null && !state.isComplete)
-          _KeyboardWidget(
-            onLetter: (l) => ref.read(gameProvider.notifier).enterLetter(l),
-            onDelete: () => ref.read(gameProvider.notifier).deleteLetter(),
+          _ArenaKeyboardWidget(
+            onLetter: (l) => ref.read(arenaStatusProvider.notifier).enterLetter(l),
+            onDelete: () => ref.read(arenaStatusProvider.notifier).deleteLetter(),
           ),
       ],
     );
   }
 }
 
-// ─── Hücre Widget ───────────────────────────────────────────────────────────
-
-class _CellWidget extends StatelessWidget {
-  final CrosswordCell cell;
-  final GameState gameState;
+class _ArenaCellWidget extends StatelessWidget {
+  final ArenaCell cell;
+  final ArenaStatusState gameState;
   final VoidCallback onTap;
 
-  const _CellWidget(
-      {required this.cell, required this.gameState, required this.onTap});
+  const _ArenaCellWidget({required this.cell, required this.gameState, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -389,11 +351,8 @@ class _CellWidget extends StatelessWidget {
       return const SizedBox(width: 40, height: 40);
     }
 
-    // Durumu belirle
     final sel = gameState.selectedPlacementIndex;
-    final placement = sel != null && sel < gameState.placements.length
-        ? gameState.placements[sel]
-        : null;
+    final placement = sel != null && sel < gameState.placements.length ? gameState.placements[sel] : null;
 
     final isInSelectedWord = placement?.containsCell(cell.x, cell.y) ?? false;
 
@@ -443,10 +402,7 @@ class _CellWidget extends StatelessWidget {
                 left: 3,
                 child: Text(
                   '${cell.number}',
-                  style: const TextStyle(
-                      fontSize: 9,
-                      color: Colors.white54,
-                      fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 9, color: Colors.white54, fontWeight: FontWeight.bold),
                 ),
               ),
             Center(
@@ -466,13 +422,11 @@ class _CellWidget extends StatelessWidget {
   }
 }
 
-// ─── Klavye Widget ──────────────────────────────────────────────────────────
-
-class _KeyboardWidget extends StatelessWidget {
+class _ArenaKeyboardWidget extends StatelessWidget {
   final void Function(String) onLetter;
   final VoidCallback onDelete;
 
-  const _KeyboardWidget({required this.onLetter, required this.onDelete});
+  const _ArenaKeyboardWidget({required this.onLetter, required this.onDelete});
 
   static const _rows = [
     ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
@@ -493,13 +447,11 @@ class _KeyboardWidget extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: row
-                      .map((key) => _KeyButton(
-                          label: key, onPressed: () => onLetter(key)))
+                      .map((key) => _ArenaKeyButton(label: key, onPressed: () => onLetter(key)))
                       .toList(),
                 ),
               )),
-          // Sil tuşu
-          _KeyButton(
+          _ArenaKeyButton(
             label: '⌫',
             onPressed: onDelete,
             width: 80,
@@ -511,13 +463,13 @@ class _KeyboardWidget extends StatelessWidget {
   }
 }
 
-class _KeyButton extends StatelessWidget {
+class _ArenaKeyButton extends StatelessWidget {
   final String label;
   final VoidCallback onPressed;
   final double width;
   final Color? color;
 
-  const _KeyButton({
+  const _ArenaKeyButton({
     required this.label,
     required this.onPressed,
     this.width = 34,

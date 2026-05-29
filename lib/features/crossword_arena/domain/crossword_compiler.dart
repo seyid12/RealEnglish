@@ -1,11 +1,9 @@
-import '../domain/models.dart';
+import '../domain/arena_models.dart';
 
-class CrosswordGenerator {
-  static CrosswordResult generate(
-      List<Map<String, dynamic>> wordsJson, int gridSize) {
-    if (wordsJson.isEmpty) return CrosswordResult(_emptyGrid(gridSize), []);
+class CrosswordCompiler {
+  static CompilationResult generate(List<Map<String, dynamic>> wordsJson, int gridSize) {
+    if (wordsJson.isEmpty) return CompilationResult(_emptyGrid(gridSize), []);
 
-    // Kelimeleri büyükten küçüğe sıralayarak yerleşim ihtimalini maksimize et
     final sortedWordsJson = List<Map<String, dynamic>>.from(wordsJson);
     sortedWordsJson.sort((a, b) => b['word'].toString().length.compareTo(a['word'].toString().length));
 
@@ -15,10 +13,8 @@ class CrosswordGenerator {
     List<List<String?>> bestChars = List.generate(gridSize, (_) => List.filled(gridSize, null));
     List<_InternalPlacement> bestPlacements = [];
 
-    // Recursive Backtracking (Geri İzleme) Algoritması
     bool backtrack(int wordIndex, List<List<String?>> currentGrid, List<_InternalPlacement> currentPlacements) {
       if (wordIndex == words.length) {
-        // Tüm kelimeler başarıyla yerleştirildi!
         bestChars = _copyGrid(currentGrid);
         bestPlacements = List.from(currentPlacements);
         return true;
@@ -26,7 +22,6 @@ class CrosswordGenerator {
 
       final word = words[wordIndex];
 
-      // 1. İlk Kelime: Merkeze dengeli yerleştir
       if (wordIndex == 0) {
         for (final horizontal in [true, false]) {
           final startX = horizontal ? ((gridSize - word.length) / 2).floor() : gridSize ~/ 2;
@@ -55,7 +50,6 @@ class CrosswordGenerator {
         return false;
       }
 
-      // 2. Kesişim Adaylarını Bul: Yeni kelimeyi sadece mevcut kelimelerle kesişen hücrelerde dene
       final List<_PlacementCandidate> candidates = [];
 
       for (final p in currentPlacements) {
@@ -68,14 +62,12 @@ class CrosswordGenerator {
             if (word[wi] != gridChar) continue;
 
             if (p.horizontal) {
-              // p yataysa, yeni kelime dikey yerleştirilmeli
               final nx = gridX;
               final ny = gridY - wi;
               if (_canPlaceV(currentGrid, word, nx, ny, gridSize)) {
                 candidates.add(_PlacementCandidate(nx, ny, false));
               }
             } else {
-              // p dikeyse, yeni kelime yatay yerleştirilmeli
               final nx = gridX - wi;
               final ny = gridY;
               if (_canPlaceH(currentGrid, word, nx, ny, gridSize)) {
@@ -86,7 +78,6 @@ class CrosswordGenerator {
         }
       }
 
-      // Adayları karıştırarak farklı tasarımlar üretilmesini sağla
       candidates.shuffle();
 
       for (final cand in candidates) {
@@ -105,7 +96,6 @@ class CrosswordGenerator {
         }
       }
 
-      // 3. Fallback Floating: Eğer hiçbir kesişen konum bulunamazsa, boş yerlere kesişimsiz yerleştirmeyi son çare dene
       for (int y = 0; y < gridSize; y++) {
         for (int x = 0; x < gridSize; x++) {
           if (_canPlaceH(currentGrid, word, x, y, gridSize)) {
@@ -128,15 +118,12 @@ class CrosswordGenerator {
       return false;
     }
 
-    // Algoritmayı çalıştır
     backtrack(0, List.generate(gridSize, (_) => List.filled(gridSize, null)), []);
 
-    // Eğer backtracking tamamen başarısız olduysa, fallback olarak eski sıralı yöntemi kullan
     if (bestPlacements.isEmpty) {
       return _generateSimpleFallback(wordsJson, gridSize);
     }
 
-    // Numaralandırmayı tahtadaki koordinatlarına göre sıralayarak ver (Yukarıdan aşağıya, soldan sağa)
     bestPlacements.sort((a, b) {
       if (a.y != b.y) return a.y.compareTo(b.y);
       return a.x.compareTo(b.x);
@@ -148,21 +135,19 @@ class CrosswordGenerator {
       numberedPlacements.add(_InternalPlacement(p.word, p.x, p.y, p.horizontal, i + 1));
     }
 
-    // Grid hücre yapısını oluştur
     final grid = List.generate(
       gridSize,
       (y) => List.generate(gridSize, (x) {
         final c = bestChars[y][x];
-        if (c == null) return CrosswordCell(x: x, y: y);
+        if (c == null) return ArenaCell(x: x, y: y);
         int? num;
         for (final p in numberedPlacements) {
           if (p.x == x && p.y == y) { num = p.number; break; }
         }
-        return CrosswordCell(x: x, y: y, char: c, isBlank: false, number: num);
+        return ArenaCell(x: x, y: y, char: c, isBlank: false, number: num);
       }),
     );
 
-    // Placements listesini üret ve asıl kelime-ipucu listesiyle eşleştir
     final placements = numberedPlacements.map((p) {
       final idx = words.indexOf(p.word);
       final clue = idx >= 0 ? clues[idx] : '';
@@ -176,10 +161,9 @@ class CrosswordGenerator {
       );
     }).toList();
 
-    return CrosswordResult(grid, placements);
+    return CompilationResult(grid, placements);
   }
 
-  // Grid kopyalama yardımcısı
   static List<List<String?>> _copyGrid(List<List<String?>> source) {
     return source.map((row) => List<String?>.from(row)).toList();
   }
@@ -226,8 +210,7 @@ class CrosswordGenerator {
     }
   }
 
-  // Emniyet Kemeri (Fallback Yöntemi): Hızlı ve basit yerleşim
-  static CrosswordResult _generateSimpleFallback(List<Map<String, dynamic>> wordsJson, int gridSize) {
+  static CompilationResult _generateSimpleFallback(List<Map<String, dynamic>> wordsJson, int gridSize) {
     final words = wordsJson.map((w) => w['word'].toString().toUpperCase()).toList();
     final clues = wordsJson.map((w) => w['clue'].toString()).toList();
 
@@ -280,7 +263,6 @@ class CrosswordGenerator {
       }
 
       if (!placed) {
-        // Floating yerleşim
         for (int y = 0; y < gridSize; y++) {
           if (placed) break;
           for (int x = 0; x < gridSize; x++) {
@@ -299,12 +281,12 @@ class CrosswordGenerator {
       gridSize,
       (y) => List.generate(gridSize, (x) {
         final c = chars[y][x];
-        if (c == null) return CrosswordCell(x: x, y: y);
+        if (c == null) return ArenaCell(x: x, y: y);
         int? num;
         for (final p in internals) {
           if (p.x == x && p.y == y) { num = p.number; break; }
         }
-        return CrosswordCell(x: x, y: y, char: c, isBlank: false, number: num);
+        return ArenaCell(x: x, y: y, char: c, isBlank: false, number: num);
       }),
     );
 
@@ -321,11 +303,11 @@ class CrosswordGenerator {
       );
     }).toList();
 
-    return CrosswordResult(grid, placements);
+    return CompilationResult(grid, placements);
   }
 
-  static List<List<CrosswordCell>> _emptyGrid(int gs) => List.generate(
-      gs, (y) => List.generate(gs, (x) => CrosswordCell(x: x, y: y)));
+  static List<List<ArenaCell>> _emptyGrid(int gs) => List.generate(
+      gs, (y) => List.generate(gs, (x) => ArenaCell(x: x, y: y)));
 }
 
 class _InternalPlacement {

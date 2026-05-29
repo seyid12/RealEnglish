@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
-import 'features/level_selection/view/level_selection_screen.dart';
+import 'features/stage_picker/view/stage_picker_view.dart';
 import 'core/services/vocabulary_repository.dart';
 
 
@@ -33,7 +33,7 @@ class AiEnglishCrosswordApp extends StatelessWidget {
       title: 'AI English Crossword',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
-      home: const LevelSelectionScreen(),
+      home: const StagePickerView(),
     );
   }
 }

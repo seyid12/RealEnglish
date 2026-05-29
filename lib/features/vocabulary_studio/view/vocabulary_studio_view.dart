@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/vocabulary_repository.dart';
-import '../providers/word_generator_provider.dart';
+import '../providers/ai_lexicon_generator.dart';
 
 const _kBg = Color(0xFF1A1A2E);
 const _kCard = Color(0xFF12122A);
@@ -11,14 +11,14 @@ const _kSubtext = Color(0xFF8888AA);
 const _kSuccess = Color(0xFF2D6A4F);
 const _kDanger = Color(0xFFD44A4A);
 
-class CustomWordsScreen extends ConsumerStatefulWidget {
-  const CustomWordsScreen({super.key});
+class VocabularyStudioView extends ConsumerStatefulWidget {
+  const VocabularyStudioView({super.key});
 
   @override
-  ConsumerState<CustomWordsScreen> createState() => _CustomWordsScreenState();
+  ConsumerState<VocabularyStudioView> createState() => _VocabularyStudioViewState();
 }
 
-class _CustomWordsScreenState extends ConsumerState<CustomWordsScreen>
+class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _wordController = TextEditingController();
@@ -52,7 +52,7 @@ class _CustomWordsScreenState extends ConsumerState<CustomWordsScreen>
   @override
   Widget build(BuildContext context) {
     final vocabRepo = ref.watch(vocabularyRepositoryProvider);
-    final genState = ref.watch(wordGeneratorProvider);
+    final genState = ref.watch(aiLexiconGeneratorProvider);
 
     return Scaffold(
       backgroundColor: _kBg,
@@ -65,7 +65,6 @@ class _CustomWordsScreenState extends ConsumerState<CustomWordsScreen>
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          // ✨ AI ile Üret butonu
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: FilledButton.icon(
@@ -75,9 +74,7 @@ class _CustomWordsScreenState extends ConsumerState<CustomWordsScreen>
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              onPressed: genState.isLoading
-                  ? null
-                  : () => _showAiGenerateSheet(context),
+              onPressed: genState.isLoading ? null : () => _showAiGenerateSheet(context),
               icon: genState.isLoading
                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Icon(Icons.auto_awesome, size: 18),
@@ -100,76 +97,76 @@ class _CustomWordsScreenState extends ConsumerState<CustomWordsScreen>
         child: TabBarView(
           controller: _tabController,
           children: _levels.map((level) {
-          final words = vocabRepo.getCustomWords(level);
+            final words = vocabRepo.getCustomWords(level);
 
-          if (words.isEmpty) {
-            return _buildEmptyState(level);
-          }
+            if (words.isEmpty) {
+              return _buildEmptyState(level);
+            }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: words.length,
-            itemBuilder: (context, index) {
-              final item = words[index];
-              final word = item['word'].toString();
-              final clue = item['clue'].toString();
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: words.length,
+              itemBuilder: (context, index) {
+                final item = words[index];
+                final word = item['word'].toString();
+                final clue = item['clue'].toString();
 
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: _kCard,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white10),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            word,
-                            style: const TextStyle(
-                              color: _kText,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.0,
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: _kCard,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.white10),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              word,
+                              style: const TextStyle(
+                                color: _kText,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.0,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            clue,
-                            style: const TextStyle(
-                              color: _kSubtext,
-                              fontSize: 14,
+                            const SizedBox(height: 4),
+                            Text(
+                              clue,
+                              style: const TextStyle(
+                                color: _kSubtext,
+                                fontSize: 14,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline, color: _kDanger),
-                      onPressed: () async {
-                        await vocabRepo.deleteCustomWordByValue(word);
-                        _refresh();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('🗑️ "$word" kelimesi silindi.'),
-                              backgroundColor: _kDanger,
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        }).toList(),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, color: _kDanger),
+                        onPressed: () async {
+                          await vocabRepo.deleteCustomWordByValue(word);
+                          _refresh();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('🗑️ "$word" kelimesi silindi.'),
+                                backgroundColor: _kDanger,
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          }).toList(),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -247,11 +244,11 @@ class _CustomWordsScreenState extends ConsumerState<CustomWordsScreen>
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    const Row(
                       children: [
-                        const Icon(Icons.auto_awesome, color: Color(0xFF7C3AED), size: 24),
-                        const SizedBox(width: 10),
-                        const Text(
+                        Icon(Icons.auto_awesome, color: Color(0xFF7C3AED), size: 24),
+                        SizedBox(width: 10),
+                        Text(
                           'Yapay Zeka ile Kelime Üret',
                           style: TextStyle(color: _kText, fontSize: 20, fontWeight: FontWeight.bold),
                         ),
@@ -264,7 +261,6 @@ class _CustomWordsScreenState extends ConsumerState<CustomWordsScreen>
                     ),
                     const SizedBox(height: 20),
 
-                    // Seviye seçimi
                     const Text('Seviye', style: TextStyle(color: _kSubtext, fontSize: 13)),
                     const SizedBox(height: 6),
                     Row(
@@ -297,7 +293,6 @@ class _CustomWordsScreenState extends ConsumerState<CustomWordsScreen>
                     ),
                     const SizedBox(height: 20),
 
-                    // Özel Kategori / Konu Girişi
                     const Text(
                       'Özel Kategori / Konu (İsteğe Bağlı)',
                       style: TextStyle(color: _kSubtext, fontSize: 13),
@@ -322,7 +317,6 @@ class _CustomWordsScreenState extends ConsumerState<CustomWordsScreen>
                     ),
                     const SizedBox(height: 10),
 
-                    // Hızlı Öneriler
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -341,7 +335,6 @@ class _CustomWordsScreenState extends ConsumerState<CustomWordsScreen>
                     ),
                     const SizedBox(height: 20),
 
-                    // Kelime sayısı
                     const Text('Üretilecek Kelime Sayısı', style: TextStyle(color: _kSubtext, fontSize: 13)),
                     const SizedBox(height: 6),
                     Row(
@@ -394,22 +387,22 @@ class _CustomWordsScreenState extends ConsumerState<CustomWordsScreen>
                           setState(() => _selectedLevel = level);
                           _tabController.index = _levels.indexOf(level);
 
-                          await ref.read(wordGeneratorProvider.notifier).generateWords(
+                          await ref.read(aiLexiconGeneratorProvider.notifier).generateWords(
                             level: level,
                             count: selectedCount,
                             topic: topicController.text.trim().isEmpty ? null : topicController.text.trim(),
                           );
 
-                          final result = ref.read(wordGeneratorProvider);
+                          final result = ref.read(aiLexiconGeneratorProvider);
                           if (mounted) {
-                            if (result.status == GenerationStatus.success) {
+                            if (result.status == LexiconGenerationStatus.success) {
                               messenger.showSnackBar(
                                 SnackBar(
                                   content: Text('✅ ${result.generatedCount} kelime başarıyla eklendi!'),
                                   backgroundColor: _kSuccess,
                                 ),
                               );
-                            } else if (result.status == GenerationStatus.error) {
+                            } else if (result.status == LexiconGenerationStatus.error) {
                               messenger.showSnackBar(
                                 SnackBar(
                                   content: Text('❌ ${result.error}'),
@@ -417,7 +410,7 @@ class _CustomWordsScreenState extends ConsumerState<CustomWordsScreen>
                                 ),
                               );
                             }
-                            ref.read(wordGeneratorProvider.notifier).reset();
+                            ref.read(aiLexiconGeneratorProvider.notifier).reset();
                             _refresh();
                           }
                         },
@@ -469,7 +462,6 @@ class _CustomWordsScreenState extends ConsumerState<CustomWordsScreen>
                   ),
                   const SizedBox(height: 20),
 
-                  // İngilizce Kelime
                   const Text('İngilizce Kelime', style: TextStyle(color: _kSubtext, fontSize: 13)),
                   const SizedBox(height: 6),
                   Container(
@@ -492,7 +484,6 @@ class _CustomWordsScreenState extends ConsumerState<CustomWordsScreen>
                   ),
                   const SizedBox(height: 16),
 
-                  // Türkçe İpucu
                   const Text('Türkçe Çengel Bulmaca İpucu', style: TextStyle(color: _kSubtext, fontSize: 13)),
                   const SizedBox(height: 6),
                   Container(
@@ -514,7 +505,6 @@ class _CustomWordsScreenState extends ConsumerState<CustomWordsScreen>
                   ),
                   const SizedBox(height: 16),
 
-                  // Seviye Seçimi
                   const Text('İngilizce Seviyesi', style: TextStyle(color: _kSubtext, fontSize: 13)),
                   const SizedBox(height: 6),
                   Container(
@@ -553,7 +543,6 @@ class _CustomWordsScreenState extends ConsumerState<CustomWordsScreen>
                   ),
                   const SizedBox(height: 24),
 
-                  // Ekle Butonu
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -576,7 +565,6 @@ class _CustomWordsScreenState extends ConsumerState<CustomWordsScreen>
                           return;
                         }
 
-                        // Sadece harf kontrolü
                         if (!RegExp(r'^[a-zA-Z\s]+$').hasMatch(word)) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
@@ -589,7 +577,7 @@ class _CustomWordsScreenState extends ConsumerState<CustomWordsScreen>
 
                         final vocabRepo = ref.read(vocabularyRepositoryProvider);
                         await vocabRepo.addCustomWord(word, clue, _selectedLevel);
-                        
+
                         if (context.mounted) {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(

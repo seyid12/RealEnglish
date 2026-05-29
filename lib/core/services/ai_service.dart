@@ -1,1 +1,0 @@
-// Deprecated: Local AI service is replaced by Gemini API and Ollama. This file is no longer used.

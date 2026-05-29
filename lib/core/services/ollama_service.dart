@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
-import '../../features/game_board/domain/prompt_manager.dart';
+import '../../features/crossword_arena/domain/prompt_manager.dart';
 
 class OllamaService {
   final Dio _dio;
