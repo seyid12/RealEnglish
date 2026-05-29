@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/color_palette.dart';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../domain/arena_models.dart';
@@ -7,16 +9,16 @@ import '../../vocabulary_studio/view/vocabulary_studio_view.dart';
 import '../../../core/services/tts_service.dart';
 
 
-const _kBg = Color(0xFF1A1A2E);
-const _kCellNormal = Color(0xFF2D2D44);
-const _kCellSelected = Color(0xFF3A4A6B);
-const _kCellCursor = Color(0xFF4A7FD4);
-const _kCellCorrect = Color(0xFF2D6A4F);
-const _kTextNormal = Color(0xFFE0E0FF);
-const _kTextCorrect = Color(0xFF74C69D);
-const _kAccent = Color(0xFF4A7FD4);
-const _kKeyBg = Color(0xFF252540);
-const _kKeyPressed = Color(0xFF4A7FD4);
+const _kBg = ColorPalette.background;
+const _kCellNormal = ColorPalette.cellNormal;
+const _kCellSelected = ColorPalette.cellSelected;
+const _kCellCursor = ColorPalette.cellCursor;
+const _kCellCorrect = ColorPalette.cellCorrect;
+const _kTextNormal = ColorPalette.textPrimary;
+const _kTextCorrect = ColorPalette.textDark;
+const _kAccent = ColorPalette.primary;
+const _kKeyBg = ColorPalette.surface;
+const _kKeyPressed = ColorPalette.primary;
 
 class CrosswordArenaView extends ConsumerStatefulWidget {
   final String level;
@@ -66,7 +68,7 @@ class _CrosswordArenaViewState extends ConsumerState<CrosswordArenaView> {
       child: Scaffold(
         backgroundColor: _kBg,
         appBar: AppBar(
-          backgroundColor: const Color(0xFF12122A),
+          backgroundColor: ColorPalette.surface,
           title: Text('${widget.level} Seviyesi',
               style: const TextStyle(color: _kTextNormal, fontWeight: FontWeight.bold)),
           leading: IconButton(
@@ -109,7 +111,7 @@ class _CrosswordArenaViewState extends ConsumerState<CrosswordArenaView> {
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF12122A),
+                  color: ColorPalette.surface,
                   shape: BoxShape.circle,
                   border: Border.all(color: _kAccent.withValues(alpha: 0.3), width: 2),
                 ),
@@ -267,7 +269,7 @@ class _CrosswordArenaViewState extends ConsumerState<CrosswordArenaView> {
         Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          color: const Color(0xFF12122A),
+          color: ColorPalette.surface,
           child: Row(
             children: [
               const Icon(Icons.lightbulb, color: Colors.amber, size: 22),
@@ -438,7 +440,7 @@ class _ArenaKeyboardWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-      color: const Color(0xFF0F0F20),
+      color: ColorPalette.background,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -455,7 +457,7 @@ class _ArenaKeyboardWidget extends StatelessWidget {
             label: '⌫',
             onPressed: onDelete,
             width: 80,
-            color: const Color(0xFF3A2A2A),
+            color: ColorPalette.surfaceLighter,
           ),
         ],
       ),

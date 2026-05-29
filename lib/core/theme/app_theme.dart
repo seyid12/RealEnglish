@@ -1,24 +1,30 @@
 import 'package:flutter/material.dart';
+import 'color_palette.dart';
 
 class AppTheme {
   static ThemeData get darkTheme {
     return ThemeData(
       brightness: Brightness.dark,
-      primarySwatch: Colors.deepPurple,
-      scaffoldBackgroundColor: const Color(0xFF121212),
+      primaryColor: ColorPalette.primary,
+      scaffoldBackgroundColor: ColorPalette.background,
       appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFF1F1F1F),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
+          backgroundColor: ColorPalette.primary,
+          foregroundColor: ColorPalette.textDark,
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
+          elevation: 8,
+          shadowColor: ColorPalette.primary.withValues(alpha: 0.5),
         ),
       ),
+      fontFamily: 'Inter', // Or any default font you prefer
     );
   }
 }

@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/color_palette.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/command_center_state.dart';
 import '../../../core/services/word_vault_manager.dart';
 import '../../vocabulary_studio/view/vocabulary_studio_view.dart';
 
-const _kBg = Color(0xFF1A1A2E);
-const _kCard = Color(0xFF12122A);
-const _kAccent = Color(0xFF4A7FD4);
-const _kText = Color(0xFFE0E0FF);
-const _kSubtext = Color(0xFF8888AA);
+const _kBg = ColorPalette.background;
+const _kCard = ColorPalette.surface;
+const _kAccent = ColorPalette.primary;
+const _kText = ColorPalette.textPrimary;
+const _kSubtext = ColorPalette.textSecondary;
 
 class ControlPanelView extends ConsumerStatefulWidget {
   const ControlPanelView({super.key});
@@ -97,7 +99,7 @@ class _ControlPanelViewState extends ConsumerState<ControlPanelView> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('✅ Ollama ayarları kaydedildi'),
-                          backgroundColor: Color(0xFF2D6A4F),
+                          backgroundColor: ColorPalette.success,
                         ),
                       );
                     }
@@ -240,7 +242,7 @@ class _ControlPanelViewState extends ConsumerState<ControlPanelView> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('✅ Tüm kelime verileri başarıyla sıfırlandı!'),
-                    backgroundColor: Color(0xFF2D6A4F),
+                    backgroundColor: ColorPalette.success,
                   ),
                 );
               }

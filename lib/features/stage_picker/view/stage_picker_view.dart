@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/color_palette.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/command_center_state.dart';
 import '../../crossword_arena/view/crossword_arena_view.dart';
 import '../../control_panel/view/control_panel_view.dart';
 import '../../vocabulary_studio/view/vocabulary_studio_view.dart';
 
-const _kBg = Color(0xFF1A1A2E);
-const _kCard = Color(0xFF12122A);
-const _kAccent = Color(0xFF4A7FD4);
-const _kText = Color(0xFFE0E0FF);
-const _kSubtext = Color(0xFF8888AA);
+const _kBg = ColorPalette.background;
+const _kCard = ColorPalette.surface;
+const _kAccent = ColorPalette.primary;
+const _kText = ColorPalette.textPrimary;
+const _kSubtext = ColorPalette.textSecondary;
 
 class StagePickerView extends ConsumerWidget {
   const StagePickerView({super.key});
@@ -180,19 +182,19 @@ class StagePickerView extends ConsumerWidget {
                     level: 'A1',
                     description: 'Başlangıç',
                     emoji: '🌱',
-                    color: Color(0xFF2D9E6A)),
+                    color: ColorPalette.success),
                 const SizedBox(height: 16),
                 const _StageButton(
                     level: 'A2',
                     description: 'Temel',
                     emoji: '🌿',
-                    color: Color(0xFFD4A017)),
+                    color: ColorPalette.warning),
                 const SizedBox(height: 16),
                 const _StageButton(
                     level: 'B1',
                     description: 'Orta',
                     emoji: '🔥',
-                    color: Color(0xFFD44A4A)),
+                    color: ColorPalette.error),
               ],
             ),
           ),
@@ -243,7 +245,7 @@ class _StageButton extends StatelessWidget {
                 Text(level,
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color)),
                 const SizedBox(width: 12),
-                Text(description, style: const TextStyle(fontSize: 16, color: Color(0xFFCCCCEE))),
+                Text(description, style: const TextStyle(fontSize: 16, color: ColorPalette.textSecondary)),
               ],
             ),
             Icon(Icons.arrow_forward_ios, color: color, size: 18),

@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/color_palette.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/word_vault_manager.dart';
 import '../providers/ai_lexicon_generator.dart';
 
-const _kBg = Color(0xFF1A1A2E);
-const _kCard = Color(0xFF12122A);
-const _kAccent = Color(0xFF4A7FD4);
-const _kText = Color(0xFFE0E0FF);
-const _kSubtext = Color(0xFF8888AA);
-const _kSuccess = Color(0xFF2D6A4F);
-const _kDanger = Color(0xFFD44A4A);
+const _kBg = ColorPalette.background;
+const _kCard = ColorPalette.surface;
+const _kAccent = ColorPalette.primary;
+const _kText = ColorPalette.textPrimary;
+const _kSubtext = ColorPalette.textSecondary;
+const _kSuccess = ColorPalette.success;
+const _kDanger = ColorPalette.error;
 
 class VocabularyStudioView extends ConsumerStatefulWidget {
   const VocabularyStudioView({super.key});
@@ -69,7 +71,7 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
             padding: const EdgeInsets.only(right: 8),
             child: FilledButton.icon(
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF7C3AED),
+                backgroundColor: ColorPalette.secondary,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -204,7 +206,7 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
             const SizedBox(height: 24),
             ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF7C3AED),
+                backgroundColor: ColorPalette.secondary,
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
@@ -246,7 +248,7 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
                   children: [
                     const Row(
                       children: [
-                        Icon(Icons.auto_awesome, color: Color(0xFF7C3AED), size: 24),
+                        Icon(Icons.auto_awesome, color: ColorPalette.secondary, size: 24),
                         SizedBox(width: 10),
                         Text(
                           'Yapay Zeka ile Kelime Üret',
@@ -302,7 +304,7 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
                       decoration: BoxDecoration(
                         color: _kCard,
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFF7C3AED).withValues(alpha: 0.3)),
+                        border: Border.all(color: ColorPalette.secondary.withValues(alpha: 0.3)),
                       ),
                       child: TextField(
                         controller: topicController,
@@ -348,10 +350,10 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
                               duration: const Duration(milliseconds: 200),
                               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                               decoration: BoxDecoration(
-                                color: selected ? const Color(0xFF7C3AED) : _kCard,
+                                color: selected ? ColorPalette.secondary : _kCard,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: selected ? const Color(0xFF7C3AED) : Colors.white12,
+                                  color: selected ? ColorPalette.secondary : Colors.white12,
                                 ),
                               ),
                               child: Text(
@@ -373,7 +375,7 @@ class _VocabularyStudioViewState extends ConsumerState<VocabularyStudioView>
                       height: 52,
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF7C3AED),
+                          backgroundColor: ColorPalette.secondary,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         icon: const Icon(Icons.auto_awesome, color: Colors.white),
